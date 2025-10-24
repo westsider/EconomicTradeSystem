@@ -6,8 +6,15 @@
 	objectVersion = 77;
 	objects = {
 
+/* Begin PBXBuildFile section */
+		98F3009B2EABFA1C0021EDB5 /* iOS_APP_SPECS.md in Resources */ = {isa = PBXBuildFile; fileRef = 98F3009A2EABFA1C0021EDB5 /* iOS_APP_SPECS.md */; };
+		98F3009C2EABFA1C0021EDB5 /* iOS_APP_MOCKUP.md in Resources */ = {isa = PBXBuildFile; fileRef = 98F300992EABFA1C0021EDB5 /* iOS_APP_MOCKUP.md */; };
+/* End PBXBuildFile section */
+
 /* Begin PBXFileReference section */
 		98F3008B2EABF9B50021EDB5 /* EconomicTradeSystem.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = EconomicTradeSystem.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		98F300992EABFA1C0021EDB5 /* iOS_APP_MOCKUP.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = iOS_APP_MOCKUP.md; sourceTree = "<group>"; };
+		98F3009A2EABFA1C0021EDB5 /* iOS_APP_SPECS.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = iOS_APP_SPECS.md; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
@@ -32,6 +39,8 @@
 		98F300822EABF9B50021EDB5 = {
 			isa = PBXGroup;
 			children = (
+				98F300992EABFA1C0021EDB5 /* iOS_APP_MOCKUP.md */,
+				98F3009A2EABFA1C0021EDB5 /* iOS_APP_SPECS.md */,
 				98F3008D2EABF9B50021EDB5 /* EconomicTradeSystem */,
 				98F3008C2EABF9B50021EDB5 /* Products */,
 			);
@@ -109,6 +118,8 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				98F3009B2EABFA1C0021EDB5 /* iOS_APP_SPECS.md in Resources */,
+				98F3009C2EABFA1C0021EDB5 /* iOS_APP_MOCKUP.md in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
