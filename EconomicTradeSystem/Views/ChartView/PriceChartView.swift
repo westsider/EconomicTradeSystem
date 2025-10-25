@@ -26,7 +26,7 @@ struct PriceChartView: View {
         // Show last 100 bars for better visibility
         let data = Array(chartData.suffix(100))
 
-        // Only keep bars with valid Bollinger Bands (filter out completely, don't just zero them)
+        // Only keep bars with valid Bollinger Bands
         return data.filter { item in
             // Keep only if all three bands are valid (non-zero and within reasonable range)
             guard item.indicator.upper > 0,
@@ -51,32 +51,32 @@ struct PriceChartView: View {
                 .padding(.horizontal, Constants.Spacing.md)
 
             Chart {
-                // Bollinger Band Lines - only drawing valid consecutive values
+                // Bollinger Bands - draw as point marks instead of lines to avoid artifacts
                 ForEach(Array(visibleData.enumerated()), id: \.offset) { offset, data in
-                    LineMark(
+                    PointMark(
                         x: .value("Index", offset),
                         y: .value("Upper BB", data.indicator.upper)
                     )
-                    .foregroundStyle(Color.gray.opacity(0.6))
-                    .lineStyle(StrokeStyle(lineWidth: 1))
+                    .symbolSize(2)
+                    .foregroundStyle(Color.gray.opacity(0.4))
                 }
 
                 ForEach(Array(visibleData.enumerated()), id: \.offset) { offset, data in
-                    LineMark(
+                    PointMark(
                         x: .value("Index", offset),
                         y: .value("Middle BB", data.indicator.middle)
                     )
-                    .foregroundStyle(Color.gray.opacity(0.6))
-                    .lineStyle(StrokeStyle(lineWidth: 1))
+                    .symbolSize(2)
+                    .foregroundStyle(Color.gray.opacity(0.4))
                 }
 
                 ForEach(Array(visibleData.enumerated()), id: \.offset) { offset, data in
-                    LineMark(
+                    PointMark(
                         x: .value("Index", offset),
                         y: .value("Lower BB", data.indicator.lower)
                     )
-                    .foregroundStyle(Color.gray.opacity(0.6))
-                    .lineStyle(StrokeStyle(lineWidth: 1))
+                    .symbolSize(2)
+                    .foregroundStyle(Color.gray.opacity(0.4))
                 }
 
                 // Candlesticks
