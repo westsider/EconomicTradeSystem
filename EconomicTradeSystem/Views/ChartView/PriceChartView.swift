@@ -12,6 +12,9 @@ struct PriceChartView: View {
     let priceBars: [PriceBar]
     let indicators: [(upper: Double, middle: Double, lower: Double)]
 
+    @State private var scrollPosition: Int = 0
+    @State private var visibleBarCount: Int = 100
+
     private var chartData: [(bar: PriceBar, indicator: (upper: Double, middle: Double, lower: Double), index: Int)] {
         var data: [(bar: PriceBar, indicator: (upper: Double, middle: Double, lower: Double), index: Int)] = []
         for (index, bar) in priceBars.enumerated() {
@@ -22,25 +25,27 @@ struct PriceChartView: View {
         return data
     }
 
-    private var visibleData: [(bar: PriceBar, indicator: (upper: Double, middle: Double, lower: Double), index: Int)] {
-        // Show last 100 bars for better visibility
-        let data = Array(chartData.suffix(100))
-
-        // Only keep bars with valid Bollinger Bands
-        return data.filter { item in
-            // Keep only if all three bands are valid (non-zero and within reasonable range)
+    private var allValidData: [(bar: PriceBar, indicator: (upper: Double, middle: Double, lower: Double), index: Int)] {
+        // Filter all data to only include valid Bollinger Bands
+        return chartData.filter { item in
             guard item.indicator.upper > 0,
                   item.indicator.middle > 0,
                   item.indicator.lower > 0 else {
                 return false
             }
 
-            // Check if bands are within reasonable range of price (50% deviation max)
             let reasonableRange = item.bar.close * 0.5
-
             return abs(item.indicator.upper - item.bar.close) <= reasonableRange &&
                    abs(item.indicator.lower - item.bar.close) <= reasonableRange
         }
+    }
+
+    private var visibleData: [(bar: PriceBar, indicator: (upper: Double, middle: Double, lower: Double), index: Int)] {
+        let total = allValidData.count
+        let endIndex = total
+        let startIndex = max(0, endIndex - visibleBarCount)
+
+        return Array(allValidData[startIndex..<endIndex])
     }
 
     var body: some View {
@@ -120,6 +125,57 @@ struct PriceChartView: View {
             }
             .frame(height: 200)
             .padding(.horizontal, Constants.Spacing.sm)
+            .gesture(
+                MagnificationGesture()
+                    .onChanged { value in
+                        // Zoom in/out by adjusting visible bar count
+                        let newCount = Int(Double(100) / value)
+                        visibleBarCount = max(20, min(allValidData.count, newCount))
+                    }
+            )
+            .gesture(
+                DragGesture()
+                    .onChanged { value in
+                        // Allow horizontal scrolling (for future enhancement)
+                        // This could be implemented to scroll through historical data
+                    }
+            )
+
+            // Zoom controls
+            HStack(spacing: Constants.Spacing.sm) {
+                Button(action: {
+                    withAnimation {
+                        visibleBarCount = max(20, visibleBarCount - 20)
+                    }
+                }) {
+                    Image(systemName: "plus.magnifyingglass")
+                        .font(.caption)
+                        .foregroundColor(Constants.Colors.accent)
+                        .padding(8)
+                        .background(Circle().fill(Constants.Colors.cardBackground))
+                        .overlay(Circle().stroke(Constants.Colors.accent.opacity(0.3), lineWidth: 1))
+                }
+
+                Button(action: {
+                    withAnimation {
+                        visibleBarCount = min(allValidData.count, visibleBarCount + 20)
+                    }
+                }) {
+                    Image(systemName: "minus.magnifyingglass")
+                        .font(.caption)
+                        .foregroundColor(Constants.Colors.accent)
+                        .padding(8)
+                        .background(Circle().fill(Constants.Colors.cardBackground))
+                        .overlay(Circle().stroke(Constants.Colors.accent.opacity(0.3), lineWidth: 1))
+                }
+
+                Spacer()
+
+                Text("\(visibleBarCount) bars")
+                    .font(Constants.Typography.caption)
+                    .foregroundColor(Constants.Colors.secondaryText)
+            }
+            .padding(.horizontal, Constants.Spacing.md)
 
             // Legend
             HStack {
