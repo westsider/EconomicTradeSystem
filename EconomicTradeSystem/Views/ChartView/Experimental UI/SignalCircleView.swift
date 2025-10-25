@@ -79,7 +79,7 @@ struct SignalCircleView: View {
                     .foregroundColor(.white.opacity(0.95))
             }
         }
-        .padding(.vertical, 40)
+        .padding(.vertical, 12)
         .padding(.horizontal, 8)
         .background(
             LinearGradient(

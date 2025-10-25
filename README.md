@@ -7,21 +7,38 @@ Real-time swing trading signals on your iPhone, combining technical analysis wit
 ![SwiftUI](https://img.shields.io/badge/UI-SwiftUI-red)
 ![License](https://img.shields.io/badge/License-MIT-lightgrey)
 
-<img src="newUI.png" width="300" alt="iOS App Screenshot">
+<div align="center">
+  <img src="tradeViewScreenshot.png" width="300" alt="Trade View - Real-time Signals">
+  <p><em>Trade View - Real-time trading signals with economic cycle integration</em></p>
+</div>
 
 ---
 
 ## ✨ Features
 
+### Trading & Signals
 - **Real-time trading signals** (BUY/SELL/HOLD) based on 30-minute bars
-- **Technical indicators**: Bollinger Bands, RSI, Keltner Channel, ATR
-- **Interactive charts** with Bollinger Bands overlay and RSI subplot
-- **Economic cycle tracking** (Expansion, Peak, Contraction, Recovery)
-- **Position tracking** with live P/L and stop loss monitoring
-- **Multi-symbol support**: GPIX, SPY, QQQ, TSLA, AAPL
-- **Auto-refresh** every 30 minutes
-- **Secure API key storage** in iOS Keychain
-- **Apple-style design** with color-coded signals
+- **Circular signal display** with color-coded gradients (Green/Red/Gray)
+- **Technical indicators**: Bollinger Bands (20-period), RSI (14-period), Keltner Channel, ATR
+- **Interactive candlestick charts** with Bollinger Bands overlay and RSI subplot
+- **Multi-symbol support**: GPIX, SPY, QQQ, TSLA, AAPL with instant switching
+- **Pinch-to-zoom** on all charts for detailed analysis
+
+### Economic Cycle Analysis
+- **Ray Dalio Economic Cycle Integration** - Real-time classification of economic stages
+- **FRED API Integration** - Live economic data (GDP, Unemployment, Inflation, Yield Curve)
+- **Economic Dashboard** - Comprehensive view with 6 key economic indicators
+- **S&P 500 Cycle Chart** - Daily S&P 500 with colored background zones showing economic phases
+- **Cycle-aware Trading** - Detailed descriptions and strategies for each economic stage
+- **Two-Tab Interface** - Separate Trade and Economy views for focused analysis
+
+### Technical Features
+- **Auto-refresh** every 30 minutes during market hours
+- **Secure API key storage** in iOS Keychain with validation
+- **Pull-to-refresh** for manual data updates
+- **Loading states** with progress indicators
+- **Error handling** with user-friendly messages
+- **Apple-style design** with modern SwiftUI components
 
 ---
 
@@ -195,35 +212,37 @@ Based on Ray Dalio's principles, the app will classify the economy into four sta
 
 ## 📱 App Screenshots
 
-### Main Signal View
-- BUY/SELL/HOLD signal card with technical details
-- Current price display with Bollinger Band distances
-- Symbol picker for quick switching
+### Trade View
+- **Circular Signal Display**: Large, color-coded signal indicator (BUY/SELL/HOLD)
+- **Economic Cycle Button**: Shows current economic stage (Expansion/Peak/Contraction/Recovery)
+- **Symbol Picker**: Quick switching between GPIX, SPY, QQQ, TSLA, AAPL
+- **Price Chart**: Candlestick chart with Bollinger Bands overlay and pinch-to-zoom
+- **RSI Chart**: Real-time RSI indicator with overbought/oversold zones
 
-### Interactive Charts
-- **Price Chart**: 30-minute bars with Bollinger Bands overlay
-- **RSI Chart**: Real-time RSI with overbought/oversold zones
-- Synchronized time axis for easy correlation
-
-### Position Tracking
-- Real-time profit/loss calculation
-- Stop loss distance warning
-- Entry signal details and timestamp
+### Economy View
+- **Cycle Stage Card**: Large display of current economic cycle with detailed description
+- **Economic Indicators Grid**: 6 key metrics (GDP, Unemployment, Inflation, Yield Curve, Fed Funds, Sentiment)
+- **S&P 500 Cycle Chart**: Daily S&P 500 with colored background zones for economic phases
+- **Trading Strategy**: Recommendations based on current economic stage
 
 ---
 
 ## 🔮 Roadmap
 
 ### Phase 2 - Enhanced Features (Completed ✅)
-- [x] Interactive price charts with Bollinger Bands
+- [x] Interactive candlestick charts with Bollinger Bands
 - [x] RSI chart subplot with color coding
-- [x] Chart synchronization and legends
+- [x] Chart synchronization and pinch-to-zoom
+- [x] Circular signal display with gradients
+- [x] Symbol picker with instant switching
 
-### Phase 3 - Economic Integration (Planned)
-- [ ] FRED API integration for economic data
-- [ ] Real-time economic cycle classification
-- [ ] Economic indicator dashboard
-- [ ] Cycle-aware signal filtering
+### Phase 3 - Economic Integration (Completed ✅)
+- [x] FRED API integration for economic data
+- [x] Real-time economic cycle classification
+- [x] Economic indicator dashboard with 6 metrics
+- [x] S&P 500 chart with cycle background zones
+- [x] Two-tab interface (Trade & Economy)
+- [x] Cycle-aware trading strategies and descriptions
 
 ### Phase 4 - Notifications (Planned)
 - [ ] Push notifications for signal changes
