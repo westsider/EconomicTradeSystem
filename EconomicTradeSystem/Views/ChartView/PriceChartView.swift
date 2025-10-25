@@ -133,49 +133,6 @@ struct PriceChartView: View {
                         visibleBarCount = max(20, min(allValidData.count, newCount))
                     }
             )
-            .gesture(
-                DragGesture()
-                    .onChanged { value in
-                        // Allow horizontal scrolling (for future enhancement)
-                        // This could be implemented to scroll through historical data
-                    }
-            )
-
-            // Zoom controls
-            HStack(spacing: Constants.Spacing.sm) {
-                Button(action: {
-                    withAnimation {
-                        visibleBarCount = max(20, visibleBarCount - 20)
-                    }
-                }) {
-                    Image(systemName: "plus.magnifyingglass")
-                        .font(.caption)
-                        .foregroundColor(Constants.Colors.accent)
-                        .padding(8)
-                        .background(Circle().fill(Constants.Colors.cardBackground))
-                        .overlay(Circle().stroke(Constants.Colors.accent.opacity(0.3), lineWidth: 1))
-                }
-
-                Button(action: {
-                    withAnimation {
-                        visibleBarCount = min(allValidData.count, visibleBarCount + 20)
-                    }
-                }) {
-                    Image(systemName: "minus.magnifyingglass")
-                        .font(.caption)
-                        .foregroundColor(Constants.Colors.accent)
-                        .padding(8)
-                        .background(Circle().fill(Constants.Colors.cardBackground))
-                        .overlay(Circle().stroke(Constants.Colors.accent.opacity(0.3), lineWidth: 1))
-                }
-
-                Spacer()
-
-                Text("\(visibleBarCount) bars")
-                    .font(Constants.Typography.caption)
-                    .foregroundColor(Constants.Colors.secondaryText)
-            }
-            .padding(.horizontal, Constants.Spacing.md)
 
             // Legend
             HStack {
