@@ -26,23 +26,20 @@ struct PriceChartView: View {
         // Show last 100 bars for better visibility
         let data = Array(chartData.suffix(100))
 
-        // Filter out invalid Bollinger Band values (zeros or extreme outliers)
-        return data.map { item in
-            var cleanedIndicator = item.indicator
-
-            // If Bollinger Band values are invalid (0 or too far from price), set them to 0 to skip drawing
-            let priceRange = item.bar.high - item.bar.low
-            let reasonableRange = item.bar.close * 0.5 // 50% of price as max reasonable deviation
-
-            if item.indicator.upper == 0 ||
-               item.indicator.middle == 0 ||
-               item.indicator.lower == 0 ||
-               abs(item.indicator.upper - item.bar.close) > reasonableRange ||
-               abs(item.indicator.lower - item.bar.close) > reasonableRange {
-                cleanedIndicator = (upper: 0, middle: 0, lower: 0)
+        // Only keep bars with valid Bollinger Bands (filter out completely, don't just zero them)
+        return data.filter { item in
+            // Keep only if all three bands are valid (non-zero and within reasonable range)
+            guard item.indicator.upper > 0,
+                  item.indicator.middle > 0,
+                  item.indicator.lower > 0 else {
+                return false
             }
 
-            return (bar: item.bar, indicator: cleanedIndicator, index: item.index)
+            // Check if bands are within reasonable range of price (50% deviation max)
+            let reasonableRange = item.bar.close * 0.5
+
+            return abs(item.indicator.upper - item.bar.close) <= reasonableRange &&
+                   abs(item.indicator.lower - item.bar.close) <= reasonableRange
         }
     }
 
@@ -54,38 +51,32 @@ struct PriceChartView: View {
                 .padding(.horizontal, Constants.Spacing.md)
 
             Chart {
-                // Bollinger Band Lines (only draw valid values, skip zeros)
+                // Bollinger Band Lines - only drawing valid consecutive values
                 ForEach(Array(visibleData.enumerated()), id: \.offset) { offset, data in
-                    if data.indicator.upper > 0 {
-                        LineMark(
-                            x: .value("Index", offset),
-                            y: .value("Upper BB", data.indicator.upper)
-                        )
-                        .foregroundStyle(Color.gray.opacity(0.6))
-                        .lineStyle(StrokeStyle(lineWidth: 1))
-                    }
+                    LineMark(
+                        x: .value("Index", offset),
+                        y: .value("Upper BB", data.indicator.upper)
+                    )
+                    .foregroundStyle(Color.gray.opacity(0.6))
+                    .lineStyle(StrokeStyle(lineWidth: 1))
                 }
 
                 ForEach(Array(visibleData.enumerated()), id: \.offset) { offset, data in
-                    if data.indicator.middle > 0 {
-                        LineMark(
-                            x: .value("Index", offset),
-                            y: .value("Middle BB", data.indicator.middle)
-                        )
-                        .foregroundStyle(Color.gray.opacity(0.6))
-                        .lineStyle(StrokeStyle(lineWidth: 1))
-                    }
+                    LineMark(
+                        x: .value("Index", offset),
+                        y: .value("Middle BB", data.indicator.middle)
+                    )
+                    .foregroundStyle(Color.gray.opacity(0.6))
+                    .lineStyle(StrokeStyle(lineWidth: 1))
                 }
 
                 ForEach(Array(visibleData.enumerated()), id: \.offset) { offset, data in
-                    if data.indicator.lower > 0 {
-                        LineMark(
-                            x: .value("Index", offset),
-                            y: .value("Lower BB", data.indicator.lower)
-                        )
-                        .foregroundStyle(Color.gray.opacity(0.6))
-                        .lineStyle(StrokeStyle(lineWidth: 1))
-                    }
+                    LineMark(
+                        x: .value("Index", offset),
+                        y: .value("Lower BB", data.indicator.lower)
+                    )
+                    .foregroundStyle(Color.gray.opacity(0.6))
+                    .lineStyle(StrokeStyle(lineWidth: 1))
                 }
 
                 // Candlesticks
