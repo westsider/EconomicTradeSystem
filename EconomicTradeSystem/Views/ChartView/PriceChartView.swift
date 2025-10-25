@@ -62,8 +62,8 @@ struct PriceChartView: View {
                         x: .value("Index", offset),
                         y: .value("Upper BB", data.indicator.upper)
                     )
-                    .symbolSize(2)
-                    .foregroundStyle(Color.gray.opacity(0.4))
+                    .symbolSize(6)
+                    .foregroundStyle(Color.gray.opacity(0.7))
                 }
 
                 ForEach(Array(visibleData.enumerated()), id: \.offset) { offset, data in
@@ -71,8 +71,8 @@ struct PriceChartView: View {
                         x: .value("Index", offset),
                         y: .value("Middle BB", data.indicator.middle)
                     )
-                    .symbolSize(2)
-                    .foregroundStyle(Color.gray.opacity(0.4))
+                    .symbolSize(6)
+                    .foregroundStyle(Color.gray.opacity(0.7))
                 }
 
                 ForEach(Array(visibleData.enumerated()), id: \.offset) { offset, data in
@@ -80,8 +80,8 @@ struct PriceChartView: View {
                         x: .value("Index", offset),
                         y: .value("Lower BB", data.indicator.lower)
                     )
-                    .symbolSize(2)
-                    .foregroundStyle(Color.gray.opacity(0.4))
+                    .symbolSize(6)
+                    .foregroundStyle(Color.gray.opacity(0.7))
                 }
 
                 // Candlesticks
