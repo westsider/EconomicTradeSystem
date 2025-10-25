@@ -104,8 +104,6 @@ struct PriceChartView: View {
             }
             .chartYAxis {
                 AxisMarks(position: .trailing) { value in
-                    AxisGridLine(stroke: StrokeStyle(lineWidth: 0.5, dash: [2]))
-                        .foregroundStyle(Constants.Colors.secondaryText.opacity(0.2))
                     AxisValueLabel()
                         .font(.caption2)
                 }
