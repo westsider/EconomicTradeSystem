@@ -43,24 +43,33 @@ struct PriceChartView: View {
         let rsi = rsiValues[index]
 
         // Buy signal: Price touches/crosses Lower BB AND RSI < oversold threshold
-        let priceBelowOrAtLower = item.bar.close <= item.indicator.lower
-        let rsiOversold = rsi < indicatorSettings.rsiOversold
+        // Allow small tolerance for "touching" the band (within 0.5%)
+        let tolerance = item.indicator.lower * 0.005
+        let priceTouchesLower = item.bar.close <= (item.indicator.lower + tolerance)
+        let rsiOversold = rsi <= indicatorSettings.rsiOversold
 
-        if priceBelowOrAtLower && rsiOversold {
+        if priceTouchesLower && rsiOversold {
             print("🟢 BUY Signal at index \(index): close=\(item.bar.close), lower BB=\(item.indicator.lower), RSI=\(rsi)")
             return .buy
         }
 
         // Debug: Check if price touches lower band but RSI isn't low enough
-        if priceBelowOrAtLower && !rsiOversold {
-            print("⚠️ Near BUY at index \(index): close=\(item.bar.close), lower BB=\(item.indicator.lower), RSI=\(rsi) (needs < \(Int(indicatorSettings.rsiOversold)))")
+        if priceTouchesLower && !rsiOversold {
+            print("⚠️ Near BUY at index \(index): close=\(item.bar.close), lower BB=\(item.indicator.lower), RSI=\(rsi) (needs <= \(Int(indicatorSettings.rsiOversold)))")
+        }
+
+        // Debug: Check if RSI is oversold but price isn't at lower band
+        if !priceTouchesLower && rsiOversold {
+            print("⚠️ RSI oversold at index \(index) but price not at lower BB: close=\(item.bar.close), lower BB=\(item.indicator.lower), RSI=\(rsi)")
         }
 
         // Sell signal: Price touches/crosses Upper BB AND RSI > overbought threshold
-        let priceAboveOrAtUpper = item.bar.close >= item.indicator.upper
-        let rsiOverbought = rsi > indicatorSettings.rsiOverbought
+        // Allow small tolerance for "touching" the band (within 0.5%)
+        let upperTolerance = item.indicator.upper * 0.005
+        let priceTouchesUpper = item.bar.close >= (item.indicator.upper - upperTolerance)
+        let rsiOverbought = rsi >= indicatorSettings.rsiOverbought
 
-        if priceAboveOrAtUpper && rsiOverbought {
+        if priceTouchesUpper && rsiOverbought {
             print("🔴 SELL Signal at index \(index): close=\(item.bar.close), upper BB=\(item.indicator.upper), RSI=\(rsi)")
             return .sell
         }
