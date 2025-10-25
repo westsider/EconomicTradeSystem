@@ -141,6 +141,62 @@ class PolygonService: ObservableObject {
         }
     }
 
+    /// Fetch daily bars for a given symbol
+    /// - Parameters:
+    ///   - symbol: Stock symbol (e.g., "SPY")
+    ///   - daysBack: Number of days of historical data to fetch
+    /// - Returns: Array of PriceBar objects
+    func fetchDailyBars(symbol: String, daysBack: Int = 730) async throws -> [PriceBar] {
+        let endDate = Date()
+        let startDate = Calendar.current.date(byAdding: .day, value: -daysBack, to: endDate) ?? endDate
+
+        let dateFormatter = DateFormatter()
+        dateFormatter.dateFormat = "yyyy-MM-dd"
+        let fromDate = dateFormatter.string(from: startDate)
+        let toDate = dateFormatter.string(from: endDate)
+
+        // Build URL: /v2/aggs/ticker/{ticker}/range/1/day/{from}/{to}
+        let urlString = "\(baseURL)/\(symbol)/range/1/day/\(fromDate)/\(toDate)?adjusted=true&sort=asc&limit=50000&apiKey=\(apiKey)"
+
+        guard let url = URL(string: urlString) else {
+            throw PolygonError.invalidURL
+        }
+
+        do {
+            let (data, _) = try await URLSession.shared.data(from: url)
+            let polygonResponse = try JSONDecoder().decode(PolygonResponse.self, from: data)
+
+            // Check response status - accept both OK and DELAYED (free tier)
+            if polygonResponse.status != "OK" && polygonResponse.status != "DELAYED" {
+                throw PolygonError.apiError("API returned status: \(polygonResponse.status)")
+            }
+
+            guard let results = polygonResponse.results, !results.isEmpty else {
+                throw PolygonError.noData
+            }
+
+            // Convert PolygonBar to PriceBar
+            let priceBars = results.map { bar -> PriceBar in
+                let timestamp = Date(timeIntervalSince1970: TimeInterval(bar.t) / 1000.0)
+                return PriceBar(
+                    timestamp: timestamp,
+                    open: bar.o,
+                    high: bar.h,
+                    low: bar.l,
+                    close: bar.c,
+                    volume: bar.v
+                )
+            }
+
+            return priceBars
+
+        } catch let error as PolygonError {
+            throw error
+        } catch {
+            throw PolygonError.networkError(error)
+        }
+    }
+
     /// Fetch the latest 30-minute bar for a given symbol
     /// - Parameter symbol: Stock symbol (e.g., "GPIX")
     /// - Returns: Latest PriceBar

@@ -35,13 +35,60 @@ enum CycleStage: String, Codable {
     var description: String {
         switch self {
         case .expansion:
-            return "Economy is growing. Bullish signals favored."
+            return "The economy is experiencing healthy growth with positive GDP, falling unemployment, and moderate inflation. This is typically the longest phase of the economic cycle and the best time for equity investments."
         case .peak:
-            return "Economy at peak. Caution advised."
+            return "Economic growth is slowing, inflation is rising, and the yield curve may be inverting. The Federal Reserve often raises interest rates to cool down the economy. This phase signals caution for investors."
         case .contraction:
-            return "Economy is contracting. Bearish signals favored."
+            return "GDP growth has turned negative, unemployment is rising, and economic activity is declining. This is a recession phase where defensive investments and cash preservation are priorities."
         case .recovery:
-            return "Economy is recovering. Early bullish signals."
+            return "The economy has bottomed and is beginning to grow again. Unemployment remains high but is starting to fall. Interest rates are typically low, making it an opportune time for early equity investments."
+        }
+    }
+
+    var tradingStrategy: String {
+        switch self {
+        case .expansion:
+            return "Favor bullish signals. Enter long positions when technical indicators confirm oversold conditions. The risk/reward is favorable for swing trading strategies."
+        case .peak:
+            return "Exercise caution. Reduce position sizes and tighten stop losses. Consider taking profits on existing positions as the cycle may be turning."
+        case .contraction:
+            return "Avoid new long positions or trade defensively. Focus on capital preservation. Short-term oversold bounces may occur but are risky in a declining economic environment."
+        case .recovery:
+            return "Begin accumulating positions on pullbacks. Early recovery offers excellent risk/reward as the economy stabilizes. Look for confirmation from both technical and economic indicators."
+        }
+    }
+
+    var iconName: String {
+        switch self {
+        case .expansion: return "arrow.up.right.circle.fill"
+        case .peak: return "exclamationmark.triangle.fill"
+        case .contraction: return "arrow.down.circle.fill"
+        case .recovery: return "arrow.up.circle.fill"
+        }
+    }
+
+    var gradient: Gradient {
+        switch self {
+        case .expansion:
+            return Gradient(colors: [
+                Color(red: 0.38, green: 0.93, blue: 0.78),
+                Color(red: 0.10, green: 0.80, blue: 0.47)
+            ])
+        case .peak:
+            return Gradient(colors: [
+                Color(red: 1.0, green: 0.65, blue: 0.0),
+                Color(red: 1.0, green: 0.45, blue: 0.0)
+            ])
+        case .contraction:
+            return Gradient(colors: [
+                Color(red: 1.0, green: 0.30, blue: 0.30),
+                Color(red: 0.90, green: 0.10, blue: 0.10)
+            ])
+        case .recovery:
+            return Gradient(colors: [
+                Color(red: 0.0, green: 0.60, blue: 0.95),
+                Color(red: 0.0, green: 0.45, blue: 0.85)
+            ])
         }
     }
 }

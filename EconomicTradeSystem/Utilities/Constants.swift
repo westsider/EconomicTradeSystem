@@ -13,6 +13,18 @@ struct Constants {
     struct API {
         static let polygonBaseURL = "https://api.polygon.io"
         static let fredBaseURL = "https://api.stlouisfed.org/fred"
+
+        // FRED API Series IDs for Economic Indicators
+        struct FREDSeries {
+            static let gdpGrowth = "A191RL1Q225SBEA"      // Real GDP Growth Rate
+            static let unemployment = "UNRATE"             // Unemployment Rate
+            static let cpi = "CPIAUCSL"                    // Consumer Price Index
+            static let fedFunds = "FEDFUNDS"               // Federal Funds Rate
+            static let treasury10Y = "GS10"                // 10-Year Treasury Rate
+            static let treasury2Y = "GS2"                  // 2-Year Treasury Rate
+            static let payrolls = "PAYEMS"                 // Total Nonfarm Payrolls
+            static let consumerSentiment = "UMCSENT"       // Consumer Sentiment Index
+        }
     }
 
     // MARK: - Trading Configuration
@@ -32,6 +44,23 @@ struct Constants {
         static let rsiOverbought = 70.0
         static let keltnerPeriod = 20
         static let keltnerATRMultiplier = 2.0
+    }
+
+    // MARK: - Economic Cycle Configuration
+    struct EconomicCycle {
+        static let smoothingPeriod = 90  // Days for moving average smoothing
+        static let yieldCurveSmoothingPeriod = 30  // Days for yield curve smoothing
+
+        // Classification thresholds (from Python web app)
+        static let contractionGDPThreshold = 0.0
+        static let contractionUnemploymentTrend = 0.3
+        static let peakGDPTrend = -0.5
+        static let peakInflation = 3.5
+        static let peakYieldCurve = -0.2
+        static let recoveryGDPMin = 0.0
+        static let recoveryGDPMax = 2.0
+        static let recoveryUnemploymentMin = 6.0
+        static let recoveryUnemploymentTrend = -0.1
     }
 
     // MARK: - Update Intervals

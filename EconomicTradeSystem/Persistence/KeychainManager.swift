@@ -110,4 +110,21 @@ class KeychainManager {
     func deletePolygonAPIKey() throws {
         try delete(key: "polygon_api_key")
     }
+
+    // MARK: - Convenience Methods for FRED API Key
+    func saveFREDAPIKey(_ key: String) throws {
+        try save(key: "fred_api_key", value: key)
+    }
+
+    func getFREDAPIKey() throws -> String {
+        try retrieve(key: "fred_api_key")
+    }
+
+    func hasFREDAPIKey() -> Bool {
+        exists(key: "fred_api_key")
+    }
+
+    func deleteFREDAPIKey() throws {
+        try delete(key: "fred_api_key")
+    }
 }

@@ -16,18 +16,23 @@ class SignalViewModel: ObservableObject {
     @Published var currentPosition: Position?
     @Published var priceBars: [PriceBar] = []
     @Published var cycleStage: CycleStage?
+    @Published var currentEconomicData: EconomicData?
+    @Published var cycleStageHistory: [(date: Date, stage: CycleStage)] = []
     @Published var isLoading = false
     @Published var errorMessage: String?
     @Published var selectedSymbol: String = Constants.Trading.defaultSymbol
     @Published var lastUpdateTime: Date?
 
     // MARK: - Services
-    private var polygonService: PolygonService?
+    var polygonService: PolygonService?
+    private var fredService: FREDService?
+    private var cycleClassifier: EconomicCycleClassifier?
     private var updateTimer: Timer?
 
     // MARK: - Initialization
     init() {
         setupPolygonService()
+        setupFREDService()
     }
 
     // MARK: - Setup Polygon Service
@@ -37,6 +42,86 @@ class SignalViewModel: ObservableObject {
             polygonService = PolygonService(apiKey: apiKey)
         } catch {
             errorMessage = "Please configure your Polygon.io API key in Settings"
+        }
+    }
+
+    // MARK: - Setup FRED Service
+    func setupFREDService() {
+        // Always use the default FRED API key for now
+        let defaultKey = "ebde2f9652163f7bc1694fa764f8ea44"
+
+        // Check if there's a stored key
+        if KeychainManager.shared.hasFREDAPIKey() {
+            do {
+                let storedKey = try KeychainManager.shared.getFREDAPIKey()
+                print("📊 Found stored FRED key: \(String(storedKey.prefix(8)))... (length: \(storedKey.count))")
+
+                // Validate it's a proper FRED key (32 lowercase alphanumeric)
+                let isValid = storedKey.count == 32 && storedKey.allSatisfy { $0.isLetter || $0.isNumber } && storedKey.lowercased() == storedKey
+
+                if isValid {
+                    print("✅ Using stored FRED API key")
+                    fredService = FREDService(apiKey: storedKey)
+                    cycleClassifier = EconomicCycleClassifier()
+                } else {
+                    print("⚠️ Stored FRED key is invalid format - deleting and using default")
+                    try? KeychainManager.shared.deleteFREDAPIKey()
+                    fredService = FREDService(apiKey: defaultKey)
+                    cycleClassifier = EconomicCycleClassifier()
+                }
+            } catch {
+                print("⚠️ Error reading FRED key - using default: \(error)")
+                fredService = FREDService(apiKey: defaultKey)
+                cycleClassifier = EconomicCycleClassifier()
+            }
+        } else {
+            // No stored key - use default
+            print("⚠️ No FRED API key configured - using free public key: \(String(defaultKey.prefix(8)))...")
+            fredService = FREDService(apiKey: defaultKey)
+            cycleClassifier = EconomicCycleClassifier()
+        }
+
+        // Trigger fetching economic cycle data
+        fetchEconomicCycle()
+    }
+
+    // MARK: - Fetch Economic Cycle
+    private func fetchEconomicCycle() {
+        guard let fredService = fredService,
+              let classifier = cycleClassifier else {
+            print("⚠️ FRED service or classifier not initialized")
+            return
+        }
+
+        Task {
+            do {
+                print("📊 Fetching economic data from FRED...")
+                // Fetch economic data from FRED
+                let economicData = try await fredService.fetchAllIndicators(startDate: "2020-01-01")
+                print("📊 Received \(economicData.count) economic data points")
+
+                // Classify into cycle stages
+                let _ = classifier.classify(data: economicData)
+
+                // Get current stage and history
+                if let currentStage = classifier.getCurrentStage() {
+                    await MainActor.run {
+                        self.cycleStage = currentStage
+                        self.cycleStageHistory = classifier.classify(data: economicData)
+                        self.currentEconomicData = economicData.last
+                        print("✅ Economic Cycle Stage: \(currentStage.rawValue)")
+                        print("✅ Economic Data: GDP=\(economicData.last?.gdpGrowth ?? 0), Unemployment=\(economicData.last?.unemployment ?? 0)")
+                    }
+                } else {
+                    print("⚠️ No current stage available")
+                }
+            } catch {
+                print("❌ Failed to fetch economic cycle: \(error)")
+                if let fredError = error as? FREDError {
+                    print("❌ FRED Error details: \(fredError)")
+                }
+                // Don't show error to user - cycle is optional
+            }
         }
     }
 
