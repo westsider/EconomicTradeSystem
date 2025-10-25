@@ -37,6 +37,7 @@ struct IndicatorSettingsSection: View {
 
 struct BollingerPeriodSlider: View {
     @ObservedObject var indicatorSettings: IndicatorSettings
+    @State private var localValue: Double = 0
 
     var body: some View {
         VStack(alignment: .leading, spacing: Constants.Spacing.xs) {
@@ -44,19 +45,27 @@ struct BollingerPeriodSlider: View {
                 Text("Bollinger Bands Period")
                     .font(Constants.Typography.callout)
                 Spacer()
-                Text("\(Int(indicatorSettings.bollingerPeriod))")
+                Text("\(Int(localValue))")
                     .foregroundColor(Constants.Colors.accent)
                     .font(Constants.Typography.headline)
             }
-            Slider(value: $indicatorSettings.bollingerPeriod, in: 10...50, step: 1)
-                .tint(Constants.Colors.accent)
+            Slider(value: $localValue, in: 10...50, step: 1, onEditingChanged: { editing in
+                if !editing {
+                    indicatorSettings.bollingerPeriod = localValue
+                }
+            })
+            .tint(Constants.Colors.accent)
         }
         .padding(.vertical, Constants.Spacing.xs)
+        .onAppear {
+            localValue = indicatorSettings.bollingerPeriod
+        }
     }
 }
 
 struct BollingerStdDevSlider: View {
     @ObservedObject var indicatorSettings: IndicatorSettings
+    @State private var localValue: Double = 0
 
     var body: some View {
         VStack(alignment: .leading, spacing: Constants.Spacing.xs) {
@@ -64,19 +73,27 @@ struct BollingerStdDevSlider: View {
                 Text("Bollinger Bands Std Dev")
                     .font(Constants.Typography.callout)
                 Spacer()
-                Text(String(format: "%.1f", indicatorSettings.bollingerStdDev))
+                Text(String(format: "%.1f", localValue))
                     .foregroundColor(Constants.Colors.accent)
                     .font(Constants.Typography.headline)
             }
-            Slider(value: $indicatorSettings.bollingerStdDev, in: 1.0...3.0, step: 0.1)
-                .tint(Constants.Colors.accent)
+            Slider(value: $localValue, in: 1.0...3.0, step: 0.1, onEditingChanged: { editing in
+                if !editing {
+                    indicatorSettings.bollingerStdDev = localValue
+                }
+            })
+            .tint(Constants.Colors.accent)
         }
         .padding(.vertical, Constants.Spacing.xs)
+        .onAppear {
+            localValue = indicatorSettings.bollingerStdDev
+        }
     }
 }
 
 struct RSIPeriodSlider: View {
     @ObservedObject var indicatorSettings: IndicatorSettings
+    @State private var localValue: Double = 0
 
     var body: some View {
         VStack(alignment: .leading, spacing: Constants.Spacing.xs) {
@@ -84,19 +101,27 @@ struct RSIPeriodSlider: View {
                 Text("RSI Period")
                     .font(Constants.Typography.callout)
                 Spacer()
-                Text("\(Int(indicatorSettings.rsiPeriod))")
+                Text("\(Int(localValue))")
                     .foregroundColor(Constants.Colors.accent)
                     .font(Constants.Typography.headline)
             }
-            Slider(value: $indicatorSettings.rsiPeriod, in: 7...21, step: 1)
-                .tint(Constants.Colors.accent)
+            Slider(value: $localValue, in: 7...21, step: 1, onEditingChanged: { editing in
+                if !editing {
+                    indicatorSettings.rsiPeriod = localValue
+                }
+            })
+            .tint(Constants.Colors.accent)
         }
         .padding(.vertical, Constants.Spacing.xs)
+        .onAppear {
+            localValue = indicatorSettings.rsiPeriod
+        }
     }
 }
 
 struct RSIOversoldSlider: View {
     @ObservedObject var indicatorSettings: IndicatorSettings
+    @State private var localValue: Double = 0
 
     var body: some View {
         VStack(alignment: .leading, spacing: Constants.Spacing.xs) {
@@ -104,19 +129,27 @@ struct RSIOversoldSlider: View {
                 Text("RSI Oversold")
                     .font(Constants.Typography.callout)
                 Spacer()
-                Text("\(Int(indicatorSettings.rsiOversold))")
+                Text("\(Int(localValue))")
                     .foregroundColor(Constants.Colors.buyGreen)
                     .font(Constants.Typography.headline)
             }
-            Slider(value: $indicatorSettings.rsiOversold, in: 20...50, step: 1)
-                .tint(Constants.Colors.buyGreen)
+            Slider(value: $localValue, in: 20...50, step: 1, onEditingChanged: { editing in
+                if !editing {
+                    indicatorSettings.rsiOversold = localValue
+                }
+            })
+            .tint(Constants.Colors.buyGreen)
         }
         .padding(.vertical, Constants.Spacing.xs)
+        .onAppear {
+            localValue = indicatorSettings.rsiOversold
+        }
     }
 }
 
 struct RSIOverboughtSlider: View {
     @ObservedObject var indicatorSettings: IndicatorSettings
+    @State private var localValue: Double = 0
 
     var body: some View {
         VStack(alignment: .leading, spacing: Constants.Spacing.xs) {
@@ -124,19 +157,27 @@ struct RSIOverboughtSlider: View {
                 Text("RSI Overbought")
                     .font(Constants.Typography.callout)
                 Spacer()
-                Text("\(Int(indicatorSettings.rsiOverbought))")
+                Text("\(Int(localValue))")
                     .foregroundColor(Constants.Colors.sellRed)
                     .font(Constants.Typography.headline)
             }
-            Slider(value: $indicatorSettings.rsiOverbought, in: 60...85, step: 1)
-                .tint(Constants.Colors.sellRed)
+            Slider(value: $localValue, in: 60...85, step: 1, onEditingChanged: { editing in
+                if !editing {
+                    indicatorSettings.rsiOverbought = localValue
+                }
+            })
+            .tint(Constants.Colors.sellRed)
         }
         .padding(.vertical, Constants.Spacing.xs)
+        .onAppear {
+            localValue = indicatorSettings.rsiOverbought
+        }
     }
 }
 
 struct KeltnerPeriodSlider: View {
     @ObservedObject var indicatorSettings: IndicatorSettings
+    @State private var localValue: Double = 0
 
     var body: some View {
         VStack(alignment: .leading, spacing: Constants.Spacing.xs) {
@@ -144,19 +185,27 @@ struct KeltnerPeriodSlider: View {
                 Text("Keltner Channel Period")
                     .font(Constants.Typography.callout)
                 Spacer()
-                Text("\(Int(indicatorSettings.keltnerPeriod))")
+                Text("\(Int(localValue))")
                     .foregroundColor(Constants.Colors.accent)
                     .font(Constants.Typography.headline)
             }
-            Slider(value: $indicatorSettings.keltnerPeriod, in: 10...50, step: 1)
-                .tint(Constants.Colors.accent)
+            Slider(value: $localValue, in: 10...50, step: 1, onEditingChanged: { editing in
+                if !editing {
+                    indicatorSettings.keltnerPeriod = localValue
+                }
+            })
+            .tint(Constants.Colors.accent)
         }
         .padding(.vertical, Constants.Spacing.xs)
+        .onAppear {
+            localValue = indicatorSettings.keltnerPeriod
+        }
     }
 }
 
 struct KeltnerATRSlider: View {
     @ObservedObject var indicatorSettings: IndicatorSettings
+    @State private var localValue: Double = 0
 
     var body: some View {
         VStack(alignment: .leading, spacing: Constants.Spacing.xs) {
@@ -164,13 +213,20 @@ struct KeltnerATRSlider: View {
                 Text("Keltner ATR Multiplier")
                     .font(Constants.Typography.callout)
                 Spacer()
-                Text(String(format: "%.1f", indicatorSettings.keltnerATRMultiplier))
+                Text(String(format: "%.1f", localValue))
                     .foregroundColor(Constants.Colors.accent)
                     .font(Constants.Typography.headline)
             }
-            Slider(value: $indicatorSettings.keltnerATRMultiplier, in: 1.0...3.0, step: 0.1)
-                .tint(Constants.Colors.accent)
+            Slider(value: $localValue, in: 1.0...3.0, step: 0.1, onEditingChanged: { editing in
+                if !editing {
+                    indicatorSettings.keltnerATRMultiplier = localValue
+                }
+            })
+            .tint(Constants.Colors.accent)
         }
         .padding(.vertical, Constants.Spacing.xs)
+        .onAppear {
+            localValue = indicatorSettings.keltnerATRMultiplier
+        }
     }
 }
