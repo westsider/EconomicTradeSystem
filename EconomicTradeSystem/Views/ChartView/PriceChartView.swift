@@ -24,7 +24,26 @@ struct PriceChartView: View {
 
     private var visibleData: [(bar: PriceBar, indicator: (upper: Double, middle: Double, lower: Double), index: Int)] {
         // Show last 100 bars for better visibility
-        Array(chartData.suffix(100))
+        let data = Array(chartData.suffix(100))
+
+        // Filter out invalid Bollinger Band values (zeros or extreme outliers)
+        return data.map { item in
+            var cleanedIndicator = item.indicator
+
+            // If Bollinger Band values are invalid (0 or too far from price), set them to 0 to skip drawing
+            let priceRange = item.bar.high - item.bar.low
+            let reasonableRange = item.bar.close * 0.5 // 50% of price as max reasonable deviation
+
+            if item.indicator.upper == 0 ||
+               item.indicator.middle == 0 ||
+               item.indicator.lower == 0 ||
+               abs(item.indicator.upper - item.bar.close) > reasonableRange ||
+               abs(item.indicator.lower - item.bar.close) > reasonableRange {
+                cleanedIndicator = (upper: 0, middle: 0, lower: 0)
+            }
+
+            return (bar: item.bar, indicator: cleanedIndicator, index: item.index)
+        }
     }
 
     var body: some View {
