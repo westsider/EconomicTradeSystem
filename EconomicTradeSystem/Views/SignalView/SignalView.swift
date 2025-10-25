@@ -81,7 +81,7 @@ struct SignalView: View {
                     }
                 }
             }
-            .navigationTitle("GPIX Signals")
+            .navigationTitle("\(viewModel.selectedSymbol) Signals")
             .navigationBarTitleDisplayMode(.large)
             .toolbar {
                 ToolbarItem(placement: .navigationBarTrailing) {
