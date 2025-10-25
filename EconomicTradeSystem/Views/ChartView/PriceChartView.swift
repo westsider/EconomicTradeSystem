@@ -15,6 +15,7 @@ struct PriceChartView: View {
     @ObservedObject var indicatorSettings = IndicatorSettings.shared
     @State private var scrollPosition: Int = 0
     @State private var visibleBarCount: Int = 100
+    @State private var dragOffset: CGFloat = 0
 
     private var rsiValues: [Double] {
         IndicatorCalculator.calculateRSI(bars: priceBars)
@@ -84,7 +85,8 @@ struct PriceChartView: View {
 
     private var visibleData: [(bar: PriceBar, indicator: (upper: Double, middle: Double, lower: Double), index: Int)] {
         let total = allValidData.count
-        let endIndex = total
+        // Use scrollPosition to determine which bars to show
+        let endIndex = min(total, total - scrollPosition)
         let startIndex = max(0, endIndex - visibleBarCount)
 
         return Array(allValidData[startIndex..<endIndex])
@@ -219,12 +221,27 @@ struct PriceChartView: View {
             .frame(height: 200)
             .padding(.horizontal, Constants.Spacing.sm)
             .gesture(
-                MagnificationGesture()
+                DragGesture()
                     .onChanged { value in
-                        // Zoom in/out by adjusting visible bar count
-                        let newCount = Int(Double(100) / value)
-                        visibleBarCount = max(20, min(allValidData.count, newCount))
+                        dragOffset = value.translation.width
                     }
+                    .onEnded { value in
+                        // Pan left/right by adjusting scroll position
+                        // Drag right (positive) = show older data (increase scrollPosition)
+                        // Drag left (negative) = show newer data (decrease scrollPosition)
+                        let dragAmount = Int(value.translation.width / 3) // Adjust sensitivity
+                        let maxScroll = max(0, allValidData.count - visibleBarCount)
+                        scrollPosition = max(0, min(maxScroll, scrollPosition - dragAmount))
+                        dragOffset = 0
+                    }
+                    .simultaneously(with:
+                        MagnificationGesture()
+                            .onChanged { value in
+                                // Zoom in/out by adjusting visible bar count
+                                let newCount = Int(Double(100) / value)
+                                visibleBarCount = max(20, min(allValidData.count, newCount))
+                            }
+                    )
             )
 
             // Legend
