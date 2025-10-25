@@ -47,16 +47,12 @@ struct SymbolButton: View {
             Text(symbol)
                 .font(Constants.Typography.headline)
                 .fontWeight(isSelected ? .bold : .semibold)
-                .foregroundColor(isSelected ? .white : Constants.Colors.primaryText)
+                .foregroundColor(isSelected ? .white : Constants.Colors.secondaryText)
                 .padding(.horizontal, 20)
                 .padding(.vertical, 12)
                 .background(
                     RoundedRectangle(cornerRadius: Constants.Radius.medium)
-                        .fill(isSelected ? Constants.Colors.accent : Color.clear)
-                        .overlay(
-                            RoundedRectangle(cornerRadius: Constants.Radius.medium)
-                                .stroke(Constants.Colors.accent, lineWidth: isSelected ? 0 : 1.5)
-                        )
+                        .fill(isSelected ? Constants.Colors.accent : Color(hex: "#E8E8ED"))
                 )
         }
     }

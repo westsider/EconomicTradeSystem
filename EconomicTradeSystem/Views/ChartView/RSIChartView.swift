@@ -12,6 +12,8 @@ struct RSIChartView: View {
     let priceBars: [PriceBar]
     let rsiValues: [Double]
 
+    @ObservedObject var indicatorSettings = IndicatorSettings.shared
+
     private var chartData: [(bar: PriceBar, rsi: Double)] {
         var data: [(bar: PriceBar, rsi: Double)] = []
         for (index, bar) in priceBars.enumerated() {
@@ -46,13 +48,13 @@ struct RSIChartView: View {
             .padding(.horizontal, Constants.Spacing.md)
 
             Chart {
-                // Overbought line (70)
-                RuleMark(y: .value("Overbought", 70))
+                // Overbought line (dynamic threshold)
+                RuleMark(y: .value("Overbought", indicatorSettings.rsiOverbought))
                     .foregroundStyle(Constants.Colors.sellRed.opacity(0.2))
                     .lineStyle(StrokeStyle(lineWidth: 1, dash: [4, 2]))
 
-                // Oversold line (30)
-                RuleMark(y: .value("Oversold", 30))
+                // Oversold line (dynamic threshold)
+                RuleMark(y: .value("Oversold", indicatorSettings.rsiOversold))
                     .foregroundStyle(Constants.Colors.buyGreen.opacity(0.2))
                     .lineStyle(StrokeStyle(lineWidth: 1, dash: [4, 2]))
 
@@ -69,7 +71,7 @@ struct RSIChartView: View {
             .chartYScale(domain: 0...100)
             .chartXAxis(.hidden)
             .chartYAxis {
-                AxisMarks(position: .trailing, values: [30, 50, 70]) { value in
+                AxisMarks(position: .trailing, values: [Int(indicatorSettings.rsiOversold), 50, Int(indicatorSettings.rsiOverbought)]) { value in
                     AxisGridLine(stroke: StrokeStyle(lineWidth: 0.5, dash: [2]))
                         .foregroundStyle(Constants.Colors.secondaryText.opacity(0.2))
                     AxisValueLabel()
@@ -79,16 +81,16 @@ struct RSIChartView: View {
             .frame(height: 100)
             .padding(.horizontal, Constants.Spacing.sm)
 
-            // Simplified legend
+            // Simplified legend with dynamic thresholds
             HStack(spacing: Constants.Spacing.md) {
-                Text("Overbought >70")
+                Text("Overbought >\(Int(indicatorSettings.rsiOverbought))")
                     .font(Constants.Typography.caption)
                     .foregroundColor(Constants.Colors.secondaryText)
 
                 Text("•")
                     .foregroundColor(Constants.Colors.secondaryText)
 
-                Text("Oversold <30")
+                Text("Oversold <\(Int(indicatorSettings.rsiOversold))")
                     .font(Constants.Typography.caption)
                     .foregroundColor(Constants.Colors.secondaryText)
             }
@@ -101,9 +103,9 @@ struct RSIChartView: View {
     }
 
     private func rsiColor(_ rsi: Double) -> Color {
-        if rsi < 30 {
+        if rsi < indicatorSettings.rsiOversold {
             return Constants.Colors.buyGreen
-        } else if rsi > 70 {
+        } else if rsi > indicatorSettings.rsiOverbought {
             return Constants.Colors.sellRed
         } else {
             return Constants.Colors.accent

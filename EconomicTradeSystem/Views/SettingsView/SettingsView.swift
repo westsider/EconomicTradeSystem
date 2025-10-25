@@ -10,6 +10,7 @@ import SwiftUI
 struct SettingsView: View {
     @Environment(\.dismiss) var dismiss
     @ObservedObject var viewModel: SignalViewModel
+    @ObservedObject var indicatorSettings = IndicatorSettings.shared
 
     @State private var polygonAPIKey: String = ""
     @State private var fredAPIKey: String = ""
@@ -18,6 +19,7 @@ struct SettingsView: View {
     @State private var fredKeyAlertMessage = ""
     @State private var hasExistingPolygonKey = false
     @State private var hasExistingFREDKey = false
+    @State private var showResetAlert = false
 
     var body: some View {
         NavigationView {
@@ -168,40 +170,114 @@ struct SettingsView: View {
                     }
                 }
 
-                Section(header: Text("Indicators")) {
-                    HStack {
-                        Text("Bollinger Bands Period")
-                        Spacer()
-                        Text("\(Constants.Indicators.bollingerPeriod)")
-                            .foregroundColor(Constants.Colors.secondaryText)
+                Section(header: Text("Indicators"), footer: Text("Adjust technical indicator parameters. Changes apply immediately to signal generation.")) {
+                    VStack(alignment: .leading, spacing: Constants.Spacing.xs) {
+                        HStack {
+                            Text("Bollinger Bands Period")
+                                .font(Constants.Typography.callout)
+                            Spacer()
+                            Text("\(Int(indicatorSettings.bollingerPeriod))")
+                                .foregroundColor(Constants.Colors.accent)
+                                .font(Constants.Typography.headline)
+                        }
+                        Slider(value: $indicatorSettings.bollingerPeriod, in: 10...50, step: 1)
+                            .tint(Constants.Colors.accent)
                     }
+                    .padding(.vertical, Constants.Spacing.xs)
 
-                    HStack {
-                        Text("Bollinger Bands Std Dev")
-                        Spacer()
-                        Text("\(String(format: "%.1f", Constants.Indicators.bollingerStdDev))")
-                            .foregroundColor(Constants.Colors.secondaryText)
+                    VStack(alignment: .leading, spacing: Constants.Spacing.xs) {
+                        HStack {
+                            Text("Bollinger Bands Std Dev")
+                                .font(Constants.Typography.callout)
+                            Spacer()
+                            Text(String(format: "%.1f", indicatorSettings.bollingerStdDev))
+                                .foregroundColor(Constants.Colors.accent)
+                                .font(Constants.Typography.headline)
+                        }
+                        Slider(value: $indicatorSettings.bollingerStdDev, in: 1.0...3.0, step: 0.1)
+                            .tint(Constants.Colors.accent)
                     }
+                    .padding(.vertical, Constants.Spacing.xs)
 
-                    HStack {
-                        Text("RSI Period")
-                        Spacer()
-                        Text("\(Constants.Indicators.rsiPeriod)")
-                            .foregroundColor(Constants.Colors.secondaryText)
+                    VStack(alignment: .leading, spacing: Constants.Spacing.xs) {
+                        HStack {
+                            Text("RSI Period")
+                                .font(Constants.Typography.callout)
+                            Spacer()
+                            Text("\(Int(indicatorSettings.rsiPeriod))")
+                                .foregroundColor(Constants.Colors.accent)
+                                .font(Constants.Typography.headline)
+                        }
+                        Slider(value: $indicatorSettings.rsiPeriod, in: 7...21, step: 1)
+                            .tint(Constants.Colors.accent)
                     }
+                    .padding(.vertical, Constants.Spacing.xs)
 
-                    HStack {
-                        Text("RSI Oversold")
-                        Spacer()
-                        Text("\(Int(Constants.Indicators.rsiOversold))")
-                            .foregroundColor(Constants.Colors.secondaryText)
+                    VStack(alignment: .leading, spacing: Constants.Spacing.xs) {
+                        HStack {
+                            Text("RSI Oversold")
+                                .font(Constants.Typography.callout)
+                            Spacer()
+                            Text("\(Int(indicatorSettings.rsiOversold))")
+                                .foregroundColor(Constants.Colors.buyGreen)
+                                .font(Constants.Typography.headline)
+                        }
+                        Slider(value: $indicatorSettings.rsiOversold, in: 20...50, step: 1)
+                            .tint(Constants.Colors.buyGreen)
                     }
+                    .padding(.vertical, Constants.Spacing.xs)
 
-                    HStack {
-                        Text("RSI Overbought")
-                        Spacer()
-                        Text("\(Int(Constants.Indicators.rsiOverbought))")
-                            .foregroundColor(Constants.Colors.secondaryText)
+                    VStack(alignment: .leading, spacing: Constants.Spacing.xs) {
+                        HStack {
+                            Text("RSI Overbought")
+                                .font(Constants.Typography.callout)
+                            Spacer()
+                            Text("\(Int(indicatorSettings.rsiOverbought))")
+                                .foregroundColor(Constants.Colors.sellRed)
+                                .font(Constants.Typography.headline)
+                        }
+                        Slider(value: $indicatorSettings.rsiOverbought, in: 60...85, step: 1)
+                            .tint(Constants.Colors.sellRed)
+                    }
+                    .padding(.vertical, Constants.Spacing.xs)
+
+                    VStack(alignment: .leading, spacing: Constants.Spacing.xs) {
+                        HStack {
+                            Text("Keltner Channel Period")
+                                .font(Constants.Typography.callout)
+                            Spacer()
+                            Text("\(Int(indicatorSettings.keltnerPeriod))")
+                                .foregroundColor(Constants.Colors.accent)
+                                .font(Constants.Typography.headline)
+                        }
+                        Slider(value: $indicatorSettings.keltnerPeriod, in: 10...50, step: 1)
+                            .tint(Constants.Colors.accent)
+                    }
+                    .padding(.vertical, Constants.Spacing.xs)
+
+                    VStack(alignment: .leading, spacing: Constants.Spacing.xs) {
+                        HStack {
+                            Text("Keltner ATR Multiplier")
+                                .font(Constants.Typography.callout)
+                            Spacer()
+                            Text(String(format: "%.1f", indicatorSettings.keltnerATRMultiplier))
+                                .foregroundColor(Constants.Colors.accent)
+                                .font(Constants.Typography.headline)
+                        }
+                        Slider(value: $indicatorSettings.keltnerATRMultiplier, in: 1.0...3.0, step: 0.1)
+                            .tint(Constants.Colors.accent)
+                    }
+                    .padding(.vertical, Constants.Spacing.xs)
+
+                    Button(action: {
+                        showResetAlert = true
+                    }) {
+                        HStack {
+                            Spacer()
+                            Text("Reset to Defaults")
+                                .font(Constants.Typography.callout)
+                            Spacer()
+                        }
                     }
                 }
 
@@ -242,9 +318,30 @@ struct SettingsView: View {
             } message: {
                 Text(fredKeyAlertMessage)
             }
+            .alert("Reset Indicators", isPresented: $showResetAlert) {
+                Button("Cancel", role: .cancel) {}
+                Button("Reset", role: .destructive) {
+                    indicatorSettings.resetToDefaults()
+                    viewModel.refreshData()
+                }
+            } message: {
+                Text("This will reset all indicator parameters to their default values. Your signals will be recalculated.")
+            }
             .onAppear {
                 hasExistingPolygonKey = KeychainManager.shared.hasPolygonAPIKey()
                 hasExistingFREDKey = KeychainManager.shared.hasFREDAPIKey()
+            }
+            .onChange(of: indicatorSettings.rsiOversold) { _, _ in
+                viewModel.refreshData()
+            }
+            .onChange(of: indicatorSettings.rsiOverbought) { _, _ in
+                viewModel.refreshData()
+            }
+            .onChange(of: indicatorSettings.bollingerPeriod) { _, _ in
+                viewModel.refreshData()
+            }
+            .onChange(of: indicatorSettings.bollingerStdDev) { _, _ in
+                viewModel.refreshData()
             }
         }
     }

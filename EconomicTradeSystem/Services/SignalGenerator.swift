@@ -67,9 +67,9 @@ class SignalGenerator {
         indicators: TechnicalIndicators,
         cycleStage: CycleStage?
     ) -> Bool {
-        // Entry condition: Price < Lower BB AND RSI < 30
+        // Entry condition: Price < Lower BB AND RSI < oversold threshold
         let priceBelowLowerBB = currentBar.close < indicators.bollingerLower
-        let rsiOversold = indicators.rsi < Constants.Indicators.rsiOversold
+        let rsiOversold = indicators.rsi < IndicatorSettings.shared.rsiOversold
 
         // Basic entry signal
         let basicSignal = priceBelowLowerBB && rsiOversold
@@ -87,9 +87,9 @@ class SignalGenerator {
         currentBar: PriceBar,
         indicators: TechnicalIndicators
     ) -> Bool {
-        // Exit condition: Price > Upper BB OR RSI > 70
+        // Exit condition: Price > Upper BB OR RSI > overbought threshold
         let priceAboveUpperBB = currentBar.close > indicators.bollingerUpper
-        let rsiOverbought = indicators.rsi > Constants.Indicators.rsiOverbought
+        let rsiOverbought = indicators.rsi > IndicatorSettings.shared.rsiOverbought
 
         return priceAboveUpperBB || rsiOverbought
     }
@@ -107,7 +107,7 @@ class SignalGenerator {
             reasons.append("Price \(String(format: "%.1f%%", percentBelow)) below lower BB")
         }
 
-        if indicators.rsi < Constants.Indicators.rsiOversold {
+        if indicators.rsi < IndicatorSettings.shared.rsiOversold {
             reasons.append("RSI oversold at \(Int(indicators.rsi))")
         }
 
@@ -134,7 +134,7 @@ class SignalGenerator {
             reasons.append("Price \(String(format: "%.1f%%", percentAbove)) above upper BB")
         }
 
-        if indicators.rsi > Constants.Indicators.rsiOverbought {
+        if indicators.rsi > IndicatorSettings.shared.rsiOverbought {
             reasons.append("RSI overbought at \(Int(indicators.rsi))")
         }
 

@@ -12,8 +12,13 @@ struct PriceChartView: View {
     let priceBars: [PriceBar]
     let indicators: [(upper: Double, middle: Double, lower: Double)]
 
+    @ObservedObject var indicatorSettings = IndicatorSettings.shared
     @State private var scrollPosition: Int = 0
     @State private var visibleBarCount: Int = 100
+
+    private var rsiValues: [Double] {
+        IndicatorCalculator.calculateRSI(bars: priceBars)
+    }
 
     private var chartData: [(bar: PriceBar, indicator: (upper: Double, middle: Double, lower: Double), index: Int)] {
         var data: [(bar: PriceBar, indicator: (upper: Double, middle: Double, lower: Double), index: Int)] = []
@@ -23,6 +28,43 @@ struct PriceChartView: View {
             }
         }
         return data
+    }
+
+    // Calculate buy/sell signals for each bar
+    private func getSignalType(for index: Int, in data: [(bar: PriceBar, indicator: (upper: Double, middle: Double, lower: Double), index: Int)]) -> SignalType? {
+        guard index < data.count,
+              index < rsiValues.count,
+              rsiValues[index] > 0 else {
+            return nil
+        }
+
+        let item = data[index]
+        let rsi = rsiValues[index]
+
+        // Buy signal: Price touches/crosses Lower BB AND RSI < oversold threshold
+        let priceBelowOrAtLower = item.bar.close <= item.indicator.lower
+        let rsiOversold = rsi < indicatorSettings.rsiOversold
+
+        if priceBelowOrAtLower && rsiOversold {
+            print("🟢 BUY Signal at index \(index): close=\(item.bar.close), lower BB=\(item.indicator.lower), RSI=\(rsi)")
+            return .buy
+        }
+
+        // Debug: Check if price touches lower band but RSI isn't low enough
+        if priceBelowOrAtLower && !rsiOversold {
+            print("⚠️ Near BUY at index \(index): close=\(item.bar.close), lower BB=\(item.indicator.lower), RSI=\(rsi) (needs < \(Int(indicatorSettings.rsiOversold)))")
+        }
+
+        // Sell signal: Price touches/crosses Upper BB AND RSI > overbought threshold
+        let priceAboveOrAtUpper = item.bar.close >= item.indicator.upper
+        let rsiOverbought = rsi > indicatorSettings.rsiOverbought
+
+        if priceAboveOrAtUpper && rsiOverbought {
+            print("🔴 SELL Signal at index \(index): close=\(item.bar.close), upper BB=\(item.indicator.upper), RSI=\(rsi)")
+            return .sell
+        }
+
+        return nil
     }
 
     private var allValidData: [(bar: PriceBar, indicator: (upper: Double, middle: Double, lower: Double), index: Int)] {
@@ -48,12 +90,36 @@ struct PriceChartView: View {
         return Array(allValidData[startIndex..<endIndex])
     }
 
+    // Debug: Count signals in visible data
+    private var signalCounts: (buy: Int, sell: Int) {
+        var buyCount = 0
+        var sellCount = 0
+
+        for (_, data) in visibleData.enumerated() {
+            let globalIndex = data.index
+            if let signalType = getSignalType(for: globalIndex, in: allValidData) {
+                if signalType == .buy {
+                    buyCount += 1
+                } else {
+                    sellCount += 1
+                }
+            }
+        }
+
+        print("📊 Signal Summary: \(buyCount) BUY signals, \(sellCount) SELL signals in visible data")
+        return (buyCount, sellCount)
+    }
+
     var body: some View {
         VStack(alignment: .leading, spacing: Constants.Spacing.sm) {
             Text("Price & Bollinger Bands")
                 .font(Constants.Typography.headline)
                 .foregroundColor(Constants.Colors.primaryText)
                 .padding(.horizontal, Constants.Spacing.md)
+                .onAppear {
+                    // Trigger signal count debug
+                    let _ = signalCounts
+                }
 
             Chart {
                 // Bollinger Bands - draw as point marks instead of lines to avoid artifacts
@@ -103,6 +169,33 @@ struct PriceChartView: View {
                         width: 4
                     )
                     .foregroundStyle(data.bar.isBullish ? Constants.Colors.buyGreen : Constants.Colors.sellRed)
+                }
+
+                // Signal markers (Buy/Sell)
+                ForEach(Array(visibleData.enumerated()), id: \.offset) { offset, data in
+                    let globalIndex = data.index
+                    if let signalType = getSignalType(for: globalIndex, in: allValidData) {
+                        // Position marker below low for buy, above high for sell
+                        let yPosition = signalType == .buy ? data.bar.low * 0.998 : data.bar.high * 1.002
+
+                        PointMark(
+                            x: .value("Index", offset),
+                            y: .value("Signal", yPosition)
+                        )
+                        .symbol {
+                            if signalType == .buy {
+                                // Green up arrow for buy
+                                Image(systemName: "arrow.up.circle.fill")
+                                    .font(.system(size: 16))
+                                    .foregroundColor(Constants.Colors.buyGreen)
+                            } else {
+                                // Red down arrow for sell
+                                Image(systemName: "arrow.down.circle.fill")
+                                    .font(.system(size: 16))
+                                    .foregroundColor(Constants.Colors.sellRed)
+                            }
+                        }
+                    }
                 }
             }
             .chartYScale(domain: .automatic(includesZero: false))

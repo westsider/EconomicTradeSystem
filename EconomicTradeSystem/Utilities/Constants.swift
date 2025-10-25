@@ -40,7 +40,7 @@ struct Constants {
         static let bollingerPeriod = 20
         static let bollingerStdDev = 2.0
         static let rsiPeriod = 14
-        static let rsiOversold = 30.0
+        static let rsiOversold = 45.0
         static let rsiOverbought = 70.0
         static let keltnerPeriod = 20
         static let keltnerATRMultiplier = 2.0
