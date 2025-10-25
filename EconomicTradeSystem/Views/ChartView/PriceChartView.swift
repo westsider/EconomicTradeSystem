@@ -14,8 +14,8 @@ struct PriceChartView: View {
 
     @ObservedObject var indicatorSettings = IndicatorSettings.shared
     @State private var scrollPosition: Int = 0
+    @State private var baseScrollPosition: Int = 0
     @State private var visibleBarCount: Int = 100
-    @State private var dragOffset: CGFloat = 0
 
     private var rsiValues: [Double] {
         IndicatorCalculator.calculateRSI(bars: priceBars)
@@ -220,28 +220,26 @@ struct PriceChartView: View {
             }
             .frame(height: 200)
             .padding(.horizontal, Constants.Spacing.sm)
-            .gesture(
-                DragGesture()
+            .simultaneousGesture(
+                DragGesture(minimumDistance: 10)
                     .onChanged { value in
-                        dragOffset = value.translation.width
-                    }
-                    .onEnded { value in
-                        // Pan left/right by adjusting scroll position
-                        // Drag right (positive) = show older data (increase scrollPosition)
-                        // Drag left (negative) = show newer data (decrease scrollPosition)
-                        let dragAmount = Int(value.translation.width / 3) // Adjust sensitivity
+                        // Pan left/right by adjusting scroll position in real-time
+                        let dragAmount = Int(value.translation.width / 3)
                         let maxScroll = max(0, allValidData.count - visibleBarCount)
-                        scrollPosition = max(0, min(maxScroll, scrollPosition - dragAmount))
-                        dragOffset = 0
+                        scrollPosition = max(0, min(maxScroll, baseScrollPosition - dragAmount))
                     }
-                    .simultaneously(with:
-                        MagnificationGesture()
-                            .onChanged { value in
-                                // Zoom in/out by adjusting visible bar count
-                                let newCount = Int(Double(100) / value)
-                                visibleBarCount = max(20, min(allValidData.count, newCount))
-                            }
-                    )
+                    .onEnded { _ in
+                        // Save the final position
+                        baseScrollPosition = scrollPosition
+                    }
+            )
+            .simultaneousGesture(
+                MagnificationGesture()
+                    .onChanged { value in
+                        // Zoom in/out by adjusting visible bar count
+                        let newCount = Int(Double(100) / value)
+                        visibleBarCount = max(20, min(allValidData.count, newCount))
+                    }
             )
 
             // Legend
