@@ -35,32 +35,38 @@ struct PriceChartView: View {
                 .padding(.horizontal, Constants.Spacing.md)
 
             Chart {
-                // Bollinger Band Lines (draw once, outside the loop)
+                // Bollinger Band Lines (only draw valid values, skip zeros)
                 ForEach(Array(visibleData.enumerated()), id: \.offset) { offset, data in
-                    LineMark(
-                        x: .value("Index", offset),
-                        y: .value("Upper BB", data.indicator.upper)
-                    )
-                    .foregroundStyle(Color.gray.opacity(0.6))
-                    .lineStyle(StrokeStyle(lineWidth: 1))
+                    if data.indicator.upper > 0 {
+                        LineMark(
+                            x: .value("Index", offset),
+                            y: .value("Upper BB", data.indicator.upper)
+                        )
+                        .foregroundStyle(Color.gray.opacity(0.6))
+                        .lineStyle(StrokeStyle(lineWidth: 1))
+                    }
                 }
 
                 ForEach(Array(visibleData.enumerated()), id: \.offset) { offset, data in
-                    LineMark(
-                        x: .value("Index", offset),
-                        y: .value("Middle BB", data.indicator.middle)
-                    )
-                    .foregroundStyle(Color.gray.opacity(0.6))
-                    .lineStyle(StrokeStyle(lineWidth: 1))
+                    if data.indicator.middle > 0 {
+                        LineMark(
+                            x: .value("Index", offset),
+                            y: .value("Middle BB", data.indicator.middle)
+                        )
+                        .foregroundStyle(Color.gray.opacity(0.6))
+                        .lineStyle(StrokeStyle(lineWidth: 1))
+                    }
                 }
 
                 ForEach(Array(visibleData.enumerated()), id: \.offset) { offset, data in
-                    LineMark(
-                        x: .value("Index", offset),
-                        y: .value("Lower BB", data.indicator.lower)
-                    )
-                    .foregroundStyle(Color.gray.opacity(0.6))
-                    .lineStyle(StrokeStyle(lineWidth: 1))
+                    if data.indicator.lower > 0 {
+                        LineMark(
+                            x: .value("Index", offset),
+                            y: .value("Lower BB", data.indicator.lower)
+                        )
+                        .foregroundStyle(Color.gray.opacity(0.6))
+                        .lineStyle(StrokeStyle(lineWidth: 1))
+                    }
                 }
 
                 // Candlesticks
@@ -107,28 +113,9 @@ struct PriceChartView: View {
             .frame(height: 200)
             .padding(.horizontal, Constants.Spacing.sm)
 
-            // Simplified Legend
-            HStack(spacing: Constants.Spacing.md) {
-                HStack(spacing: 4) {
-                    Rectangle()
-                        .fill(Constants.Colors.buyGreen)
-                        .frame(width: 12, height: 12)
-                    Text("Up")
-                        .font(Constants.Typography.caption)
-                        .foregroundColor(Constants.Colors.secondaryText)
-                }
-
-                HStack(spacing: 4) {
-                    Rectangle()
-                        .fill(Constants.Colors.sellRed)
-                        .frame(width: 12, height: 12)
-                    Text("Down")
-                        .font(Constants.Typography.caption)
-                        .foregroundColor(Constants.Colors.secondaryText)
-                }
-
+            // Legend
+            HStack {
                 Spacer()
-
                 Text("30-min bars")
                     .font(Constants.Typography.caption)
                     .foregroundColor(Constants.Colors.secondaryText)
