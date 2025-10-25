@@ -12,24 +12,17 @@ struct PriceChartView: View {
     let priceBars: [PriceBar]
     let indicators: [(upper: Double, middle: Double, lower: Double)]
 
-    private var chartData: [ChartDataPoint] {
-        var data: [ChartDataPoint] = []
+    private var chartData: [(bar: PriceBar, indicator: (upper: Double, middle: Double, lower: Double), index: Int)] {
+        var data: [(bar: PriceBar, indicator: (upper: Double, middle: Double, lower: Double), index: Int)] = []
         for (index, bar) in priceBars.enumerated() {
             if index < indicators.count {
-                let indicator = indicators[index]
-                data.append(ChartDataPoint(
-                    timestamp: bar.timestamp,
-                    close: bar.close,
-                    bbUpper: indicator.upper,
-                    bbMiddle: indicator.middle,
-                    bbLower: indicator.lower
-                ))
+                data.append((bar: bar, indicator: indicators[index], index: index))
             }
         }
         return data
     }
 
-    private var visibleData: [ChartDataPoint] {
+    private var visibleData: [(bar: PriceBar, indicator: (upper: Double, middle: Double, lower: Double), index: Int)] {
         // Show last 100 bars for better visibility
         Array(chartData.suffix(100))
     }
@@ -41,61 +34,96 @@ struct PriceChartView: View {
                 .foregroundColor(Constants.Colors.primaryText)
                 .padding(.horizontal, Constants.Spacing.md)
 
-            Chart(visibleData) { dataPoint in
-                // Bollinger Band Upper
-                LineMark(
-                    x: .value("Time", dataPoint.timestamp),
-                    y: .value("Upper BB", dataPoint.bbUpper)
-                )
-                .foregroundStyle(Constants.Colors.sellRed.opacity(0.6))
-                .lineStyle(StrokeStyle(lineWidth: 1.5, dash: [5, 3]))
+            Chart {
+                ForEach(Array(visibleData.enumerated()), id: \.offset) { offset, data in
+                    // Bollinger Band Lines (using index for x-axis to remove gaps)
+                    LineMark(
+                        x: .value("Index", offset),
+                        y: .value("Upper BB", data.indicator.upper)
+                    )
+                    .foregroundStyle(Constants.Colors.sellRed.opacity(0.4))
+                    .lineStyle(StrokeStyle(lineWidth: 1))
 
-                // Bollinger Band Middle (SMA)
-                LineMark(
-                    x: .value("Time", dataPoint.timestamp),
-                    y: .value("Middle BB", dataPoint.bbMiddle)
-                )
-                .foregroundStyle(Constants.Colors.accent.opacity(0.6))
-                .lineStyle(StrokeStyle(lineWidth: 1.5, dash: [5, 3]))
+                    LineMark(
+                        x: .value("Index", offset),
+                        y: .value("Middle BB", data.indicator.middle)
+                    )
+                    .foregroundStyle(Constants.Colors.secondaryText.opacity(0.3))
+                    .lineStyle(StrokeStyle(lineWidth: 1))
 
-                // Bollinger Band Lower
-                LineMark(
-                    x: .value("Time", dataPoint.timestamp),
-                    y: .value("Lower BB", dataPoint.bbLower)
-                )
-                .foregroundStyle(Constants.Colors.buyGreen.opacity(0.6))
-                .lineStyle(StrokeStyle(lineWidth: 1.5, dash: [5, 3]))
+                    LineMark(
+                        x: .value("Index", offset),
+                        y: .value("Lower BB", data.indicator.lower)
+                    )
+                    .foregroundStyle(Constants.Colors.buyGreen.opacity(0.4))
+                    .lineStyle(StrokeStyle(lineWidth: 1))
 
-                // Price Line
-                LineMark(
-                    x: .value("Time", dataPoint.timestamp),
-                    y: .value("Price", dataPoint.close)
-                )
-                .foregroundStyle(Constants.Colors.primaryText)
-                .lineStyle(StrokeStyle(lineWidth: 2))
+                    // Candlestick
+                    RectangleMark(
+                        x: .value("Index", offset),
+                        yStart: .value("Low", data.bar.low),
+                        yEnd: .value("High", data.bar.high),
+                        width: 1
+                    )
+                    .foregroundStyle(data.bar.isBullish ? Constants.Colors.buyGreen.opacity(0.6) : Constants.Colors.sellRed.opacity(0.6))
+
+                    RectangleMark(
+                        x: .value("Index", offset),
+                        yStart: .value("Open", min(data.bar.open, data.bar.close)),
+                        yEnd: .value("Close", max(data.bar.open, data.bar.close)),
+                        width: 4
+                    )
+                    .foregroundStyle(data.bar.isBullish ? Constants.Colors.buyGreen : Constants.Colors.sellRed)
+                }
             }
             .chartYScale(domain: .automatic(includesZero: false))
             .chartXAxis {
-                AxisMarks(values: .stride(by: .hour, count: 6)) { value in
-                    AxisGridLine()
-                    AxisValueLabel(format: .dateTime.hour().minute())
+                AxisMarks(preset: .aligned, values: .automatic(desiredCount: 5)) { value in
+                    if let index = value.as(Int.self), index < visibleData.count {
+                        let timestamp = visibleData[index].bar.timestamp
+                        AxisValueLabel {
+                            Text(timestamp.formatAsTime())
+                                .font(.caption2)
+                        }
+                    }
                 }
             }
             .chartYAxis {
-                AxisMarks { value in
-                    AxisGridLine()
+                AxisMarks(position: .trailing) { value in
+                    AxisGridLine(stroke: StrokeStyle(lineWidth: 0.5, dash: [2]))
+                        .foregroundStyle(Constants.Colors.secondaryText.opacity(0.2))
                     AxisValueLabel()
+                        .font(.caption2)
                 }
             }
-            .frame(height: 250)
+            .frame(height: 200)
             .padding(.horizontal, Constants.Spacing.sm)
 
-            // Legend
+            // Simplified Legend
             HStack(spacing: Constants.Spacing.md) {
-                LegendItem(color: Constants.Colors.primaryText, label: "Price", style: .solid)
-                LegendItem(color: Constants.Colors.sellRed, label: "Upper BB", style: .dashed)
-                LegendItem(color: Constants.Colors.accent, label: "Middle BB", style: .dashed)
-                LegendItem(color: Constants.Colors.buyGreen, label: "Lower BB", style: .dashed)
+                HStack(spacing: 4) {
+                    Rectangle()
+                        .fill(Constants.Colors.buyGreen)
+                        .frame(width: 12, height: 12)
+                    Text("Up")
+                        .font(Constants.Typography.caption)
+                        .foregroundColor(Constants.Colors.secondaryText)
+                }
+
+                HStack(spacing: 4) {
+                    Rectangle()
+                        .fill(Constants.Colors.sellRed)
+                        .frame(width: 12, height: 12)
+                    Text("Down")
+                        .font(Constants.Typography.caption)
+                        .foregroundColor(Constants.Colors.secondaryText)
+                }
+
+                Spacer()
+
+                Text("30-min bars")
+                    .font(Constants.Typography.caption)
+                    .foregroundColor(Constants.Colors.secondaryText)
             }
             .padding(.horizontal, Constants.Spacing.md)
         }

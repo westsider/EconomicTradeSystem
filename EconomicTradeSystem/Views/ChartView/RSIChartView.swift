@@ -12,122 +12,85 @@ struct RSIChartView: View {
     let priceBars: [PriceBar]
     let rsiValues: [Double]
 
-    private var chartData: [RSIDataPoint] {
-        var data: [RSIDataPoint] = []
+    private var chartData: [(bar: PriceBar, rsi: Double)] {
+        var data: [(bar: PriceBar, rsi: Double)] = []
         for (index, bar) in priceBars.enumerated() {
             if index < rsiValues.count {
-                data.append(RSIDataPoint(
-                    timestamp: bar.timestamp,
-                    rsi: rsiValues[index]
-                ))
+                data.append((bar: bar, rsi: rsiValues[index]))
             }
         }
         return data
     }
 
-    private var visibleData: [RSIDataPoint] {
+    private var visibleData: [(bar: PriceBar, rsi: Double)] {
         // Show last 100 bars to match price chart
         Array(chartData.suffix(100))
     }
 
     var body: some View {
         VStack(alignment: .leading, spacing: Constants.Spacing.sm) {
-            Text("RSI (Relative Strength Index)")
-                .font(Constants.Typography.headline)
-                .foregroundColor(Constants.Colors.primaryText)
-                .padding(.horizontal, Constants.Spacing.md)
-
-            Chart {
-                // Overbought line (70)
-                RuleMark(y: .value("Overbought", 70))
-                    .foregroundStyle(Constants.Colors.sellRed.opacity(0.3))
-                    .lineStyle(StrokeStyle(lineWidth: 1, dash: [5, 3]))
-
-                // Oversold line (30)
-                RuleMark(y: .value("Oversold", 30))
-                    .foregroundStyle(Constants.Colors.buyGreen.opacity(0.3))
-                    .lineStyle(StrokeStyle(lineWidth: 1, dash: [5, 3]))
-
-                // Middle line (50)
-                RuleMark(y: .value("Middle", 50))
-                    .foregroundStyle(Constants.Colors.secondaryText.opacity(0.2))
-                    .lineStyle(StrokeStyle(lineWidth: 1, dash: [2, 2]))
-
-                // RSI Line
-                ForEach(visibleData) { dataPoint in
-                    LineMark(
-                        x: .value("Time", dataPoint.timestamp),
-                        y: .value("RSI", dataPoint.rsi)
-                    )
-                    .foregroundStyle(rsiColor(dataPoint.rsi))
-                    .lineStyle(StrokeStyle(lineWidth: 2))
-                }
-
-                // RSI Area Fill
-                ForEach(visibleData) { dataPoint in
-                    AreaMark(
-                        x: .value("Time", dataPoint.timestamp),
-                        yStart: .value("Zero", 50),
-                        yEnd: .value("RSI", dataPoint.rsi)
-                    )
-                    .foregroundStyle(
-                        LinearGradient(
-                            colors: [rsiColor(dataPoint.rsi).opacity(0.3), rsiColor(dataPoint.rsi).opacity(0.05)],
-                            startPoint: .top,
-                            endPoint: .bottom
-                        )
-                    )
-                }
-            }
-            .chartYScale(domain: 0...100)
-            .chartXAxis {
-                AxisMarks(values: .stride(by: .hour, count: 6)) { value in
-                    AxisGridLine()
-                    AxisValueLabel(format: .dateTime.hour().minute())
-                }
-            }
-            .chartYAxis {
-                AxisMarks(values: [0, 30, 50, 70, 100]) { value in
-                    AxisGridLine()
-                    AxisValueLabel()
-                }
-            }
-            .frame(height: 150)
-            .padding(.horizontal, Constants.Spacing.sm)
-
-            // Legend with current RSI
-            HStack(spacing: Constants.Spacing.md) {
-                HStack(spacing: 4) {
-                    Circle()
-                        .fill(Constants.Colors.sellRed.opacity(0.3))
-                        .frame(width: 8, height: 8)
-                    Text("Overbought (>70)")
-                        .font(Constants.Typography.caption)
-                        .foregroundColor(Constants.Colors.secondaryText)
-                }
-
-                HStack(spacing: 4) {
-                    Circle()
-                        .fill(Constants.Colors.buyGreen.opacity(0.3))
-                        .frame(width: 8, height: 8)
-                    Text("Oversold (<30)")
-                        .font(Constants.Typography.caption)
-                        .foregroundColor(Constants.Colors.secondaryText)
-                }
+            HStack {
+                Text("RSI (Relative Strength Index)")
+                    .font(Constants.Typography.headline)
+                    .foregroundColor(Constants.Colors.primaryText)
 
                 Spacer()
 
                 if let currentRSI = rsiValues.last {
-                    HStack(spacing: 4) {
-                        Text("Current:")
-                            .font(Constants.Typography.caption)
-                            .foregroundColor(Constants.Colors.secondaryText)
-                        Text("\(Int(currentRSI))")
-                            .font(Constants.Typography.callout)
-                            .fontWeight(.semibold)
-                            .foregroundColor(rsiColor(currentRSI))
-                    }
+                    Text("\(Int(currentRSI))")
+                        .font(Constants.Typography.title3)
+                        .fontWeight(.bold)
+                        .foregroundColor(rsiColor(currentRSI))
                 }
+            }
+            .padding(.horizontal, Constants.Spacing.md)
+
+            Chart {
+                // Overbought line (70)
+                RuleMark(y: .value("Overbought", 70))
+                    .foregroundStyle(Constants.Colors.sellRed.opacity(0.2))
+                    .lineStyle(StrokeStyle(lineWidth: 1, dash: [4, 2]))
+
+                // Oversold line (30)
+                RuleMark(y: .value("Oversold", 30))
+                    .foregroundStyle(Constants.Colors.buyGreen.opacity(0.2))
+                    .lineStyle(StrokeStyle(lineWidth: 1, dash: [4, 2]))
+
+                // RSI Line with continuous index (no gaps)
+                ForEach(Array(visibleData.enumerated()), id: \.offset) { offset, data in
+                    LineMark(
+                        x: .value("Index", offset),
+                        y: .value("RSI", data.rsi)
+                    )
+                    .foregroundStyle(rsiColor(data.rsi))
+                    .lineStyle(StrokeStyle(lineWidth: 2))
+                }
+            }
+            .chartYScale(domain: 0...100)
+            .chartXAxis(.hidden)
+            .chartYAxis {
+                AxisMarks(position: .trailing, values: [30, 50, 70]) { value in
+                    AxisGridLine(stroke: StrokeStyle(lineWidth: 0.5, dash: [2]))
+                        .foregroundStyle(Constants.Colors.secondaryText.opacity(0.2))
+                    AxisValueLabel()
+                        .font(.caption2)
+                }
+            }
+            .frame(height: 100)
+            .padding(.horizontal, Constants.Spacing.sm)
+
+            // Simplified legend
+            HStack(spacing: Constants.Spacing.md) {
+                Text("Overbought >70")
+                    .font(Constants.Typography.caption)
+                    .foregroundColor(Constants.Colors.secondaryText)
+
+                Text("•")
+                    .foregroundColor(Constants.Colors.secondaryText)
+
+                Text("Oversold <30")
+                    .font(Constants.Typography.caption)
+                    .foregroundColor(Constants.Colors.secondaryText)
             }
             .padding(.horizontal, Constants.Spacing.md)
         }
