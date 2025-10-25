@@ -35,30 +35,37 @@ struct PriceChartView: View {
                 .padding(.horizontal, Constants.Spacing.md)
 
             Chart {
+                // Bollinger Band Lines (draw once, outside the loop)
                 ForEach(Array(visibleData.enumerated()), id: \.offset) { offset, data in
-                    // Bollinger Band Lines (using index for x-axis to remove gaps)
                     LineMark(
                         x: .value("Index", offset),
                         y: .value("Upper BB", data.indicator.upper)
                     )
-                    .foregroundStyle(Constants.Colors.sellRed.opacity(0.4))
+                    .foregroundStyle(Color.gray.opacity(0.6))
                     .lineStyle(StrokeStyle(lineWidth: 1))
+                }
 
+                ForEach(Array(visibleData.enumerated()), id: \.offset) { offset, data in
                     LineMark(
                         x: .value("Index", offset),
                         y: .value("Middle BB", data.indicator.middle)
                     )
-                    .foregroundStyle(Constants.Colors.secondaryText.opacity(0.3))
+                    .foregroundStyle(Color.gray.opacity(0.6))
                     .lineStyle(StrokeStyle(lineWidth: 1))
+                }
 
+                ForEach(Array(visibleData.enumerated()), id: \.offset) { offset, data in
                     LineMark(
                         x: .value("Index", offset),
                         y: .value("Lower BB", data.indicator.lower)
                     )
-                    .foregroundStyle(Constants.Colors.buyGreen.opacity(0.4))
+                    .foregroundStyle(Color.gray.opacity(0.6))
                     .lineStyle(StrokeStyle(lineWidth: 1))
+                }
 
-                    // Candlestick
+                // Candlesticks
+                ForEach(Array(visibleData.enumerated()), id: \.offset) { offset, data in
+                    // Candlestick wick (high-low line)
                     RectangleMark(
                         x: .value("Index", offset),
                         yStart: .value("Low", data.bar.low),
@@ -67,6 +74,7 @@ struct PriceChartView: View {
                     )
                     .foregroundStyle(data.bar.isBullish ? Constants.Colors.buyGreen.opacity(0.6) : Constants.Colors.sellRed.opacity(0.6))
 
+                    // Candlestick body (open-close box)
                     RectangleMark(
                         x: .value("Index", offset),
                         yStart: .value("Open", min(data.bar.open, data.bar.close)),
