@@ -16,10 +16,9 @@ struct PriceChartView: View {
     @State private var scrollPosition: Int = 0
     @State private var baseScrollPosition: Int = 0
     @State private var visibleBarCount: Int = 100
-
-    private var rsiValues: [Double] {
-        IndicatorCalculator.calculateRSI(bars: priceBars)
-    }
+    @State private var cachedBuySignals: Set<Int> = []
+    @State private var cachedSellSignals: Set<Int> = []
+    @State private var cachedRSI: [Double] = []
 
     private var chartData: [(bar: PriceBar, indicator: (upper: Double, middle: Double, lower: Double), index: Int)] {
         var data: [(bar: PriceBar, indicator: (upper: Double, middle: Double, lower: Double), index: Int)] = []
@@ -31,55 +30,88 @@ struct PriceChartView: View {
         return data
     }
 
-    // Calculate buy/sell signals for each bar
-    private func getSignalType(for index: Int, in data: [(bar: PriceBar, indicator: (upper: Double, middle: Double, lower: Double), index: Int)]) -> SignalType? {
-        guard index < data.count,
-              index < rsiValues.count,
-              rsiValues[index] > 0 else {
-            return nil
+    // Calculate filtered signals - called once on appear
+    private func calculateFilteredSignals() {
+        let startTime = Date()
+        print("⏱️ [START] calculateFilteredSignals")
+
+        // Calculate and cache RSI once
+        let rsiStart = Date()
+        cachedRSI = IndicatorCalculator.calculateRSI(bars: priceBars)
+        print("⏱️ [RSI] Calculated in \(Date().timeIntervalSince(rsiStart))s - count: \(cachedRSI.count)")
+
+        let validDataStart = Date()
+        let validData = allValidData
+        print("⏱️ [ValidData] Calculated in \(Date().timeIntervalSince(validDataStart))s - count: \(validData.count)")
+
+        var buySignals = Set<Int>()
+        var sellSignals = Set<Int>()
+        var hasOpenPosition = false
+        var lastTradeDate: Date? = nil
+
+        let loopStart = Date()
+        // Process all valid data chronologically
+        for item in validData {
+            let index = item.index
+
+            guard index < cachedRSI.count, cachedRSI[index] > 0 else {
+                continue
+            }
+
+            let rsiValue = cachedRSI[index]
+            let currentDate = Calendar.current.startOfDay(for: item.bar.timestamp)
+
+            // Check if we've already traded today
+            let tradedToday = lastTradeDate.map { Calendar.current.isDate($0, inSameDayAs: item.bar.timestamp) } ?? false
+
+            // Buy signal: Only if no open position and haven't traded today
+            if !hasOpenPosition && !tradedToday {
+                let tolerance = item.indicator.lower * 0.005
+                let priceTouchesLower = item.bar.close <= (item.indicator.lower + tolerance)
+                let rsiOversold = rsiValue <= indicatorSettings.rsiOversold
+
+                if priceTouchesLower && rsiOversold {
+                    buySignals.insert(index)
+                    hasOpenPosition = true
+                    lastTradeDate = currentDate
+                }
+            }
+
+            // Sell signal: Only if we have an open position
+            if hasOpenPosition {
+                let upperTolerance = item.indicator.upper * 0.005
+                let priceTouchesUpper = item.bar.close >= (item.indicator.upper - upperTolerance)
+                let rsiOverbought = rsiValue >= indicatorSettings.rsiOverbought
+
+                if priceTouchesUpper && rsiOverbought {
+                    sellSignals.insert(index)
+                    hasOpenPosition = false
+                }
+            }
         }
+        print("⏱️ [Loop] Processed in \(Date().timeIntervalSince(loopStart))s")
 
-        let item = data[index]
-        let rsi = rsiValues[index]
+        cachedBuySignals = buySignals
+        cachedSellSignals = sellSignals
 
-        // Buy signal: Price touches/crosses Lower BB AND RSI < oversold threshold
-        // Allow small tolerance for "touching" the band (within 0.5%)
-        let tolerance = item.indicator.lower * 0.005
-        let priceTouchesLower = item.bar.close <= (item.indicator.lower + tolerance)
-        let rsiOversold = rsi <= indicatorSettings.rsiOversold
+        print("⏱️ [TOTAL] calculateFilteredSignals completed in \(Date().timeIntervalSince(startTime))s")
+        print("📊 Found \(buySignals.count) buy signals and \(sellSignals.count) sell signals")
+    }
 
-        if priceTouchesLower && rsiOversold {
-            print("🟢 BUY Signal at index \(index): close=\(item.bar.close), lower BB=\(item.indicator.lower), RSI=\(rsi)")
+    // Calculate buy/sell signals for each bar (uses cached signals)
+    private func getSignalType(for index: Int) -> SignalType? {
+        if cachedBuySignals.contains(index) {
             return .buy
         }
-
-        // Debug: Check if price touches lower band but RSI isn't low enough
-        if priceTouchesLower && !rsiOversold {
-            print("⚠️ Near BUY at index \(index): close=\(item.bar.close), lower BB=\(item.indicator.lower), RSI=\(rsi) (needs <= \(Int(indicatorSettings.rsiOversold)))")
-        }
-
-        // Debug: Check if RSI is oversold but price isn't at lower band
-        if !priceTouchesLower && rsiOversold {
-            print("⚠️ RSI oversold at index \(index) but price not at lower BB: close=\(item.bar.close), lower BB=\(item.indicator.lower), RSI=\(rsi)")
-        }
-
-        // Sell signal: Price touches/crosses Upper BB AND RSI > overbought threshold
-        // Allow small tolerance for "touching" the band (within 0.5%)
-        let upperTolerance = item.indicator.upper * 0.005
-        let priceTouchesUpper = item.bar.close >= (item.indicator.upper - upperTolerance)
-        let rsiOverbought = rsi >= indicatorSettings.rsiOverbought
-
-        if priceTouchesUpper && rsiOverbought {
-            print("🔴 SELL Signal at index \(index): close=\(item.bar.close), upper BB=\(item.indicator.upper), RSI=\(rsi)")
+        if cachedSellSignals.contains(index) {
             return .sell
         }
-
         return nil
     }
 
     private var allValidData: [(bar: PriceBar, indicator: (upper: Double, middle: Double, lower: Double), index: Int)] {
         // Filter all data to only include valid Bollinger Bands
-        return chartData.filter { item in
+        let filtered = chartData.filter { item in
             guard item.indicator.upper > 0,
                   item.indicator.middle > 0,
                   item.indicator.lower > 0 else {
@@ -90,6 +122,15 @@ struct PriceChartView: View {
             return abs(item.indicator.upper - item.bar.close) <= reasonableRange &&
                    abs(item.indicator.lower - item.bar.close) <= reasonableRange
         }
+
+        if filtered.isEmpty && !chartData.isEmpty {
+            print("⚠️ [ValidData] All \(chartData.count) items filtered out!")
+            if let first = chartData.first {
+                print("⚠️ [ValidData] First item: upper=\(first.indicator.upper), middle=\(first.indicator.middle), lower=\(first.indicator.lower), close=\(first.bar.close)")
+            }
+        }
+
+        return filtered
     }
 
     private var visibleData: [(bar: PriceBar, indicator: (upper: Double, middle: Double, lower: Double), index: Int)] {
@@ -108,7 +149,7 @@ struct PriceChartView: View {
 
         for (_, data) in visibleData.enumerated() {
             let globalIndex = data.index
-            if let signalType = getSignalType(for: globalIndex, in: allValidData) {
+            if let signalType = getSignalType(for: globalIndex) {
                 if signalType == .buy {
                     buyCount += 1
                 } else {
@@ -117,20 +158,19 @@ struct PriceChartView: View {
             }
         }
 
-        print("📊 Signal Summary: \(buyCount) BUY signals, \(sellCount) SELL signals in visible data")
         return (buyCount, sellCount)
     }
 
     var body: some View {
         VStack(alignment: .leading, spacing: Constants.Spacing.sm) {
-            Text("Price & Bollinger Bands")
-                .font(Constants.Typography.headline)
-                .foregroundColor(Constants.Colors.primaryText)
-                .padding(.horizontal, Constants.Spacing.md)
-                .onAppear {
-                    // Trigger signal count debug
-                    let _ = signalCounts
-                }
+//            Text("Price & Bollinger Bands")
+//                .font(Constants.Typography.headline)
+//                .foregroundColor(Constants.Colors.primaryText)
+//                .padding(.horizontal, Constants.Spacing.md)
+//                .onAppear {
+//                    // Trigger signal count debug
+//                    let _ = signalCounts
+//                }
 
             Chart {
                 // Bollinger Bands - draw as point marks instead of lines to avoid artifacts
@@ -185,7 +225,7 @@ struct PriceChartView: View {
                 // Signal markers (Buy/Sell)
                 ForEach(Array(visibleData.enumerated()), id: \.offset) { offset, data in
                     let globalIndex = data.index
-                    if let signalType = getSignalType(for: globalIndex, in: allValidData) {
+                    if let signalType = getSignalType(for: globalIndex) {
                         // Position marker below low for buy, above high for sell
                         let yPosition = signalType == .buy ? data.bar.low * 0.998 : data.bar.high * 1.002
 
@@ -264,6 +304,9 @@ struct PriceChartView: View {
         .background(Constants.Colors.cardBackground)
         .cornerRadius(Constants.Radius.large)
         .shadow(color: Color.black.opacity(0.05), radius: 8, x: 0, y: 2)
+        .onAppear {
+            calculateFilteredSignals()
+        }
     }
 }
 

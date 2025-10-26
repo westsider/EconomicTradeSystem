@@ -32,14 +32,14 @@ struct RSIChartView: View {
     var body: some View {
         VStack(alignment: .leading, spacing: Constants.Spacing.sm) {
             HStack {
-                Text("RSI (Relative Strength Index)")
-                    .font(Constants.Typography.headline)
-                    .foregroundColor(Constants.Colors.primaryText)
-
-                Spacer()
+//                Text("RSI (Relative Strength Index)")
+//                    .font(Constants.Typography.headline)
+//                    .foregroundColor(Constants.Colors.primaryText)
+//
+               Spacer()
 
                 if let currentRSI = rsiValues.last {
-                    Text("\(Int(currentRSI))")
+                    Text("RSI \(Int(currentRSI))")
                         .font(Constants.Typography.title3)
                         .fontWeight(.bold)
                         .foregroundColor(rsiColor(currentRSI))

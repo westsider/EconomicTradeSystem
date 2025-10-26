@@ -41,6 +41,9 @@ class IndicatorCalculator {
         bars: [PriceBar],
         period: Int = Constants.Indicators.rsiPeriod
     ) -> [Double] {
+        let startTime = Date()
+        print("⏱️ [RSI START] Calculating RSI for \(bars.count) bars")
+
         var results: [Double] = []
         var gains: [Double] = []
         var losses: [Double] = []
@@ -74,6 +77,7 @@ class IndicatorCalculator {
             }
         }
 
+        print("⏱️ [RSI END] Completed in \(Date().timeIntervalSince(startTime))s")
         return results
     }
 

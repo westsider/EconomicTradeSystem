@@ -10,6 +10,8 @@ import SwiftUI
 struct SignalView: View {
     @ObservedObject var viewModel: SignalViewModel
     @State private var showSettings = false
+    @State private var cachedBollingerBands: [(upper: Double, middle: Double, lower: Double)] = []
+    @State private var cachedRSI: [Double] = []
 
     var body: some View {
         NavigationView {
@@ -49,14 +51,16 @@ struct SignalView: View {
                             SymbolPickerView(selectedSymbol: $viewModel.selectedSymbol)
 
                             // Charts Section
-                            if !viewModel.priceBars.isEmpty {
+                            if !viewModel.priceBars.isEmpty && !cachedBollingerBands.isEmpty && !cachedRSI.isEmpty {
                                 // Price Chart with Bollinger Bands
-                                let bollingerBands = IndicatorCalculator.calculateBollingerBands(bars: viewModel.priceBars)
-                                PriceChartView(priceBars: viewModel.priceBars, indicators: bollingerBands)
+                                PriceChartView(priceBars: viewModel.priceBars, indicators: cachedBollingerBands)
 
                                 // RSI Chart
-                                let rsiValues = IndicatorCalculator.calculateRSI(bars: viewModel.priceBars)
-                                RSIChartView(priceBars: viewModel.priceBars, rsiValues: rsiValues)
+                                RSIChartView(priceBars: viewModel.priceBars, rsiValues: cachedRSI)
+                            } else if !viewModel.priceBars.isEmpty {
+                                // Show loading while calculating indicators
+                                ProgressView("Calculating indicators...")
+                                    .padding()
                             }
 
                             // Last Update Time
@@ -99,6 +103,26 @@ struct SignalView: View {
             .onChange(of: viewModel.selectedSymbol) { oldValue, newValue in
                 if oldValue != newValue {
                     viewModel.changeSymbol(to: newValue)
+                }
+            }
+            .onChange(of: viewModel.priceBars.count) { oldValue, newValue in
+                // Recalculate indicators when price bars count changes (data updated)
+                if !viewModel.priceBars.isEmpty {
+                    let start = Date()
+                    print("⏱️ [SignalView] Recalculating indicators for \(viewModel.priceBars.count) bars")
+                    cachedBollingerBands = IndicatorCalculator.calculateBollingerBands(bars: viewModel.priceBars)
+                    cachedRSI = IndicatorCalculator.calculateRSI(bars: viewModel.priceBars)
+                    print("⏱️ [SignalView] Indicators calculated in \(Date().timeIntervalSince(start))s")
+                }
+            }
+            .onAppear {
+                // Initial calculation
+                if !viewModel.priceBars.isEmpty {
+                    let start = Date()
+                    print("⏱️ [SignalView] Initial indicator calculation for \(viewModel.priceBars.count) bars")
+                    cachedBollingerBands = IndicatorCalculator.calculateBollingerBands(bars: viewModel.priceBars)
+                    cachedRSI = IndicatorCalculator.calculateRSI(bars: viewModel.priceBars)
+                    print("⏱️ [SignalView] Initial calculation completed in \(Date().timeIntervalSince(start))s")
                 }
             }
         }
